@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+
+# Base de datos SQLite
+gym-backend/gymcore.db
+gym-backend/gymcore.db-journal
+
+# Builds
+gym-backend/dist/
+gym-frontend/.next/
+gym-frontend/out/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code history extension
+.history/
+
+# Claude Code local settings
+.claude/settings.local.json
