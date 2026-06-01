@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-const API = "http://localhost:3000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 interface AuthUser {
   id: number;
@@ -15,7 +15,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string) => Promise<void>;
+  register: (email: string, name: string, password: string, role?: 'user' | 'coach', coachId?: number) => Promise<void>;
   logout: () => void;
 }
 
@@ -63,11 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   };
 
-  const register = async (email: string, name: string, password: string) => {
+  const register = async (email: string, name: string, password: string, role?: 'user' | 'coach', coachId?: number) => {
     const res = await fetch(`${API}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, password }),
+      body: JSON.stringify({ email, name, password, role, coachId }),
     });
     if (!res.ok) {
       const err = await res.json();
