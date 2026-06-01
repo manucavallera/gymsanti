@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, Filter, Plus, Minus, X, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -20,7 +20,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  suplementos: "bg-blue-600/20 text-blue-400 border-blue-600/30",
+  suplementos: "bg-fuchsia-600/20 text-fuchsia-400 border-fuchsia-600/30",
   vitaminas: "bg-green-600/20 text-green-400 border-green-600/30",
   dulces: "bg-pink-600/20 text-pink-400 border-pink-600/30",
 };
@@ -61,7 +61,7 @@ export default function StorePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen text-white">
       {/* Navbar */}
       <nav className="border-b border-zinc-800 px-6 py-4 sticky top-0 bg-zinc-950/90 backdrop-blur-sm z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -72,7 +72,7 @@ export default function StorePage() {
               </Link>
             ) : (
               <Link href="/" className="flex items-center gap-3">
-                <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">G</div>
+                <div className="w-7 h-7 bg-fuchsia-600 rounded-lg flex items-center justify-center font-bold text-sm">G</div>
                 <span className="text-lg font-black tracking-tight">GYM CORE</span>
               </Link>
             )}
@@ -81,14 +81,14 @@ export default function StorePage() {
             {!user && (
               <>
                 <Link href="/login" className="text-zinc-400 hover:text-white text-sm font-medium">Iniciar sesión</Link>
-                <Link href="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">Registrarse</Link>
+                <Link href="/register" className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">Registrarse</Link>
               </>
             )}
             <button onClick={() => setShowCart(true)} className="relative flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-600 px-4 py-2 rounded-xl transition-colors text-sm font-medium">
               <ShoppingCart className="w-4 h-4" />
               <span>Carrito</span>
               {count > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-blue-600 rounded-full text-xs flex items-center justify-center font-bold">{count}</span>
+                <span className="absolute -top-2 -right-2 w-5 h-5 bg-fuchsia-600 rounded-full text-xs flex items-center justify-center font-bold">{count}</span>
               )}
             </button>
           </div>
@@ -108,7 +108,7 @@ export default function StorePage() {
           {(Object.keys(CATEGORY_LABELS) as Category[]).map((cat) => (
             <button key={cat} onClick={() => setCategory(cat)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors border ${
-                category === cat ? "bg-blue-600 text-white border-blue-600" : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-white"
+                category === cat ? "bg-fuchsia-600 text-white border-fuchsia-600" : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-white"
               }`}>
               {CATEGORY_LABELS[cat]}
             </button>
@@ -153,13 +153,13 @@ export default function StorePage() {
                                   <Minus className="w-3 h-3" />
                                 </button>
                                 <span className="w-6 text-center text-sm font-bold">{cartItem.quantity}</span>
-                                <button onClick={() => add({ id: product.id, name: product.name, price: product.price, imageEmoji: product.imageEmoji })} className="w-7 h-7 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center transition-colors">
+                                <button onClick={() => add({ id: product.id, name: product.name, price: product.price, imageEmoji: product.imageEmoji })} className="w-7 h-7 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg flex items-center justify-center transition-colors">
                                   <Plus className="w-3 h-3" />
                                 </button>
                               </div>
                             ) : (
                               <button onClick={() => add({ id: product.id, name: product.name, price: product.price, imageEmoji: product.imageEmoji })}
-                                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                className="flex items-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
                                 <ShoppingCart className="w-3.5 h-3.5" /> Agregar
                               </button>
                             )
@@ -234,11 +234,11 @@ export default function StorePage() {
                   </div>
                   {user ? (
                     <button onClick={checkout} disabled={checkingOut}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-4 rounded-xl font-bold text-lg transition-colors">
+                      className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white py-4 rounded-xl font-bold text-lg transition-colors">
                       {checkingOut ? "Procesando..." : "Confirmar pedido"}
                     </button>
                   ) : (
-                    <Link href="/login" className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-colors text-center">
+                    <Link href="/login" className="block w-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white py-4 rounded-xl font-bold text-lg transition-colors text-center">
                       Iniciar sesión para comprar
                     </Link>
                   )}
@@ -254,3 +254,4 @@ export default function StorePage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -9,7 +9,7 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto.email, dto.name, dto.password);
+    return this.authService.register(dto.email, dto.name, dto.password, dto.role, dto.coachId);
   }
 
   @Post('login')
@@ -30,5 +30,22 @@ export class AuthController {
     @Body() body: { name?: string; currentPassword?: string; newPassword?: string },
   ) {
     return this.authService.updateProfile(req.user.id, body);
+  }
+
+  @Delete('account')
+  @UseGuards(JwtAuthGuard)
+  deleteAccount(@Request() req: any) {
+    return this.authService.deleteAccount(req.user.id);
+  }
+
+  @Post('coach-access')
+  @UseGuards(JwtAuthGuard)
+  coachAccess(@Request() req: any, @Body() body: { secret: string }) {
+    return this.authService.activateCoach(req.user.id, body.secret);
+  }
+
+  @Get('coach-access/status')
+  coachAccessStatus() {
+    return this.authService.coachAccessStatus();
   }
 }

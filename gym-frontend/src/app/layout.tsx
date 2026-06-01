@@ -13,7 +13,16 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className="dark">
-      <body className={`${inter.className} bg-zinc-950 text-white`}>
+      <body className={`${inter.className} text-white`}>
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: "url('/bg-dark.jpg'), url('/bg-pink.jpg')",
+            backgroundSize: "50% 100%, 50% 100%",
+            backgroundPosition: "left top, right top",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
         <AuthProvider>
           <CartProvider>{children}</CartProvider>
         </AuthProvider>
