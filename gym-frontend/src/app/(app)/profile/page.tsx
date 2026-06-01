@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { User, Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,13 +64,13 @@ export default function ProfilePage() {
 
       {/* Avatar + info */}
       <div className="flex items-center gap-5">
-        <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-3xl font-black">
+        <div className="w-20 h-20 rounded-2xl bg-fuchsia-600 flex items-center justify-center text-3xl font-black">
           {user?.name.charAt(0).toUpperCase()}
         </div>
         <div>
           <h3 className="text-2xl font-bold">{user?.name}</h3>
           <p className="text-zinc-400">{user?.email}</p>
-          <span className="inline-block mt-1 text-xs bg-blue-600/20 text-blue-400 border border-blue-600/30 px-2 py-0.5 rounded-full">
+          <span className="inline-block mt-1 text-xs bg-fuchsia-600/20 text-fuchsia-400 border border-fuchsia-600/30 px-2 py-0.5 rounded-full">
             {ROLE_LABELS[user?.role || "user"]}
           </span>
         </div>
@@ -80,7 +80,7 @@ export default function ProfilePage() {
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <User className="w-4 h-4 text-blue-500" /> Información personal
+            <User className="w-4 h-4 text-fuchsia-500" /> Información personal
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -92,7 +92,7 @@ export default function ProfilePage() {
           <div>
             <label className="text-sm text-zinc-400 mb-1.5 block">Nombre</label>
             <input value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" />
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-fuchsia-500 transition-colors" />
           </div>
           {profileMsg && (
             <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg ${profileMsg.type === "ok" ? "bg-green-600/10 text-green-400 border border-green-600/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
             </div>
           )}
           <button onClick={saveProfile} disabled={savingProfile || name === user?.name}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
+            className="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
             {savingProfile ? "Guardando..." : "Guardar cambios"}
           </button>
         </CardContent>
@@ -111,7 +111,7 @@ export default function ProfilePage() {
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Lock className="w-4 h-4 text-blue-500" /> Cambiar contraseña
+            <Lock className="w-4 h-4 text-fuchsia-500" /> Cambiar contraseña
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             <div key={f.label}>
               <label className="text-sm text-zinc-400 mb-1.5 block">{f.label}</label>
               <input type="password" value={f.value} onChange={(e) => f.setter(e.target.value)} placeholder="••••••••"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500 transition-colors" />
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-fuchsia-500 transition-colors" />
             </div>
           ))}
           {passMsg && (
@@ -133,7 +133,7 @@ export default function ProfilePage() {
             </div>
           )}
           <button onClick={savePassword} disabled={savingPass || !currentPassword || !newPassword || !confirmPassword}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
+            className="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
             {savingPass ? "Actualizando..." : "Cambiar contraseña"}
           </button>
         </CardContent>
@@ -141,3 +141,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

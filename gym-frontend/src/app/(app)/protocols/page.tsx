@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
-import { Plus, ChevronLeft, BookOpen, Pencil, Trash2, Save, X } from "lucide-react";
+import { Plus, ChevronLeft, BookOpen, Pencil, Trash2, Save, X, Search } from "lucide-react";
 import { authFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -18,7 +18,7 @@ const CATEGORIES = [
 ];
 
 const CAT_COLORS: Record<string, string> = {
-  entrenamiento: "bg-blue-600/20 text-blue-400 border-blue-600/30",
+  entrenamiento: "bg-fuchsia-600/20 text-fuchsia-400 border-fuchsia-600/30",
   nutricion: "bg-green-600/20 text-green-400 border-green-600/30",
   descanso: "bg-purple-600/20 text-purple-400 border-purple-600/30",
   suplementacion: "bg-orange-600/20 text-orange-400 border-orange-600/30",
@@ -31,7 +31,7 @@ function renderMarkdown(text: string) {
     .replace(/^### (.+)$/gm, '<h3 class="text-base font-bold mt-4 mb-2 text-zinc-300">$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 text-zinc-300 list-disc">$1</li>')
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-blue-500 pl-4 text-zinc-400 italic my-2">$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-fuchsia-500 pl-4 text-zinc-400 italic my-2">$1</blockquote>')
     .replace(/\n/g, '<br />');
 }
 
@@ -41,6 +41,7 @@ export default function ProtocolsPage() {
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [selected, setSelected] = useState<Protocol | null>(null);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Protocol | null>(null);
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
@@ -76,7 +77,8 @@ export default function ProtocolsPage() {
     setSelected(null);
   };
 
-  const filtered = filter === "all" ? protocols : protocols.filter((p) => p.category === filter);
+  const filtered = (filter === "all" ? protocols : protocols.filter((p) => p.category === filter))
+    .filter((p) => !search || p.title.toLowerCase().includes(search.toLowerCase()));
 
   if (selected) {
     const cat = CATEGORIES.find((c) => c.value === selected.category);
@@ -89,7 +91,7 @@ export default function ProtocolsPage() {
           <h2 className="text-2xl font-bold flex-1">{selected.title}</h2>
           {isCoach && (
             <div className="flex gap-2">
-              <button onClick={() => startEdit(selected)} className="text-zinc-400 hover:text-blue-400 transition-colors p-2">
+              <button onClick={() => startEdit(selected)} className="text-zinc-400 hover:text-fuchsia-400 transition-colors p-2">
                 <Pencil className="w-4 h-4" />
               </button>
               <button onClick={() => del(selected.id)} className="text-zinc-400 hover:text-red-400 transition-colors p-2">
@@ -123,7 +125,7 @@ export default function ProtocolsPage() {
         </div>
         {isCoach && !showForm && (
           <button onClick={() => { setShowForm(true); setEditing(null); setForm({ title: "", content: "", category: "general" }); }}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
+            className="flex items-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
             <Plus className="w-4 h-4" /> Nuevo protocolo
           </button>
         )}
@@ -141,10 +143,10 @@ export default function ProtocolsPage() {
           <input type="text" placeholder="Título *"
             value={form.title}
             onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
           />
           <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-fuchsia-500">
             {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>)}
           </select>
           <textarea
@@ -152,11 +154,11 @@ export default function ProtocolsPage() {
             value={form.content}
             onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
             rows={12}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none font-mono text-sm"
+            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 resize-none font-mono text-sm"
           />
           <div className="flex gap-3">
             <button onClick={save} disabled={saving || !form.title || !form.content}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+              className="flex items-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
               <Save className="w-4 h-4" /> {saving ? "Guardando..." : "Guardar"}
             </button>
             <button onClick={() => { setShowForm(false); setEditing(null); }} className="text-zinc-400 hover:text-white text-sm px-4 py-2">Cancelar</button>
@@ -164,15 +166,23 @@ export default function ProtocolsPage() {
         </div>
       )}
 
+      {/* Busqueda */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar protocolo..."
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
+      </div>
+
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
         <button onClick={() => setFilter("all")}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === "all" ? "bg-blue-600 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"}`}>
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === "all" ? "bg-fuchsia-600 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"}`}>
           Todos
         </button>
         {CATEGORIES.map((c) => (
           <button key={c.value} onClick={() => setFilter(c.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === c.value ? "bg-blue-600 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"}`}>
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === c.value ? "bg-fuchsia-600 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"}`}>
             {c.emoji} {c.label}
           </button>
         ))}
@@ -190,10 +200,10 @@ export default function ProtocolsPage() {
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${CAT_COLORS[p.category]} mb-2 inline-block`}>
                     {cat?.emoji} {cat?.label}
                   </span>
-                  <h3 className="font-bold group-hover:text-blue-400 transition-colors">{p.title}</h3>
+                  <h3 className="font-bold group-hover:text-fuchsia-400 transition-colors">{p.title}</h3>
                   <p className="text-zinc-500 text-sm mt-1 line-clamp-2">{p.content.replace(/[#*>-]/g, "").substring(0, 100)}...</p>
                 </div>
-                <BookOpen className="w-5 h-5 text-zinc-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-1" />
+                <BookOpen className="w-5 h-5 text-zinc-600 group-hover:text-fuchsia-400 transition-colors flex-shrink-0 mt-1" />
               </div>
             </button>
           );
@@ -208,3 +218,4 @@ export default function ProtocolsPage() {
     </div>
   );
 }
+

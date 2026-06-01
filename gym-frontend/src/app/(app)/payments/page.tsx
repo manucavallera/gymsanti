@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { Plus, CreditCard, CheckCircle2, Clock, AlertCircle, Trash2, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,7 +76,7 @@ export default function PaymentsPage() {
           <p className="text-zinc-400 mt-1">Historial y seguimiento de cuotas</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
+          className="flex items-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
           <Plus className="w-4 h-4" /> Registrar pago
         </button>
       </div>
@@ -111,7 +111,7 @@ export default function PaymentsPage() {
                     className="text-left bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-4 py-2.5 transition-colors">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{plan.label}</span>
-                      <span className="text-blue-400 font-bold text-sm">{fmt(plan.amount)}</span>
+                      <span className="text-fuchsia-400 font-bold text-sm">{fmt(plan.amount)}</span>
                     </div>
                   </button>
                 ))}
@@ -122,7 +122,7 @@ export default function PaymentsPage() {
               <input type="text" placeholder="Descripción *"
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
               />
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -130,7 +130,7 @@ export default function PaymentsPage() {
                   <input type="number" placeholder="0"
                     value={form.amount}
                     onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
                   />
                 </div>
                 <div>
@@ -138,7 +138,7 @@ export default function PaymentsPage() {
                   <input type="text" placeholder="Ej: Abril 2025"
                     value={form.period}
                     onChange={(e) => setForm((p) => ({ ...p, period: e.target.value }))}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
                   />
                 </div>
               </div>
@@ -147,13 +147,13 @@ export default function PaymentsPage() {
                 <input type="date"
                   value={form.dueDate}
                   onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-fuchsia-500"
                 />
               </div>
             </div>
             <div className="flex gap-3">
               <button onClick={save} disabled={saving || !form.description || !form.amount}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+                className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
                 {saving ? "Guardando..." : "Guardar"}
               </button>
               <button onClick={() => setShowForm(false)} className="text-zinc-400 hover:text-white text-sm px-4 py-2">Cancelar</button>
@@ -231,3 +231,4 @@ export default function PaymentsPage() {
     </div>
   );
 }
+

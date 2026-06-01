@@ -28,7 +28,8 @@ export class ProductsService implements OnModuleInit {
   async onModuleInit() {
     const count = await this.repo.count();
     if (count === 0) {
-      await this.repo.save(SEED_PRODUCTS.map((p) => this.repo.create(p as any)));
+      const entities = SEED_PRODUCTS.map((p) => Object.assign(this.repo.create(), p));
+      await this.repo.save(entities);
     }
   }
 

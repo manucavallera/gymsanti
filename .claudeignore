@@ -1,0 +1,29 @@
+# Build artifacts
+**/node_modules/
+**/.next/
+**/dist/
+**/build/
+**/coverage/
+
+# Lock files (large, not useful for Claude)
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+
+# DB and binaries
+**/*.db
+**/*.sqlite
+**/*.tsbuildinfo
+
+# Logs
+**/*.log
+**/npm-debug.log*
+
+# Empty template docs
+.claude/completions/
+.claude/sessions/
+docs/archive/
+
+# Test output
+**/test-results/
+**/.nyc_output/

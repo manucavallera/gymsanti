@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { Plus, Trash2, CheckCircle2, Circle, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ const CATEGORIES = [
 
 const CAT_COLORS: Record<string, string> = {
   peso: "bg-orange-600/20 text-orange-400 border-orange-600/30",
-  fuerza: "bg-blue-600/20 text-blue-400 border-blue-600/30",
+  fuerza: "bg-fuchsia-600/20 text-fuchsia-400 border-fuchsia-600/30",
   medidas: "bg-purple-600/20 text-purple-400 border-purple-600/30",
   habito: "bg-green-600/20 text-green-400 border-green-600/30",
   otro: "bg-zinc-600/20 text-zinc-400 border-zinc-600/30",
@@ -65,7 +65,7 @@ export default function GoalsPage() {
           <p className="text-zinc-400 mt-1">{pending.length} activos · {achieved.length} logrados</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
+          className="flex items-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2.5 rounded-xl font-bold transition-colors">
           <Plus className="w-4 h-4" /> Nuevo objetivo
         </button>
       </div>
@@ -77,19 +77,19 @@ export default function GoalsPage() {
             <input type="text" placeholder="Título del objetivo *"
               value={form.title}
               onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
             />
             <textarea placeholder="Descripción (opcional)"
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               rows={2}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 resize-none"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 resize-none"
             />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-zinc-400 mb-1 block">Categoría</label>
                 <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-fuchsia-500">
                   {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>)}
                 </select>
               </div>
@@ -98,7 +98,7 @@ export default function GoalsPage() {
                 <input type="text" placeholder="Ej: 80kg, 100kg banca..."
                   value={form.targetValue}
                   onChange={(e) => setForm((p) => ({ ...p, targetValue: e.target.value }))}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
                 />
               </div>
             </div>
@@ -107,12 +107,12 @@ export default function GoalsPage() {
               <input type="date"
                 value={form.targetDate}
                 onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-fuchsia-500"
               />
             </div>
             <div className="flex gap-3">
               <button onClick={save} disabled={saving || !form.title}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+                className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
                 {saving ? "Guardando..." : "Guardar"}
               </button>
               <button onClick={() => setShowForm(false)} className="text-zinc-400 hover:text-white text-sm px-4 py-2">Cancelar</button>
@@ -157,7 +157,7 @@ function GoalCard({ goal, onToggle, onDelete }: { goal: Goal; onToggle: (id: num
       <button onClick={() => onToggle(goal.id)} className="mt-0.5 flex-shrink-0">
         {goal.achieved
           ? <CheckCircle2 className="w-5 h-5 text-green-500" />
-          : <Circle className="w-5 h-5 text-zinc-500 hover:text-blue-400 transition-colors" />}
+          : <Circle className="w-5 h-5 text-zinc-500 hover:text-fuchsia-400 transition-colors" />}
       </button>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -171,7 +171,7 @@ function GoalCard({ goal, onToggle, onDelete }: { goal: Goal; onToggle: (id: num
           )}
         </div>
         <p className={`font-bold ${goal.achieved ? "line-through text-zinc-500" : ""}`}>{goal.title}</p>
-        {goal.targetValue && <p className="text-blue-400 text-sm mt-0.5">🎯 {goal.targetValue}</p>}
+        {goal.targetValue && <p className="text-fuchsia-400 text-sm mt-0.5">🎯 {goal.targetValue}</p>}
         {goal.description && <p className="text-zinc-500 text-sm mt-1">{goal.description}</p>}
       </div>
       <button onClick={() => onDelete(goal.id)} className="text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0">
@@ -180,3 +180,4 @@ function GoalCard({ goal, onToggle, onDelete }: { goal: Goal; onToggle: (id: num
     </div>
   );
 }
+

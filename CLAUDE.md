@@ -1,111 +1,123 @@
+# Reglas de comportamiento
+
+- Read existing files before writing. Don't re-read unless changed.
+- Thorough in reasoning, concise in output.
+- Skip files over 100KB unless required.
+- No sycophantic openers or closing fluff.
+- No emojis or em-dashes.
+- Do not guess APIs, versions, flags, commit SHAs, or package names. Verify by reading code or docs before asserting.
+
+---
+
 # GYM CORE — Contexto del proyecto
 
-## Qué es
-App de gestión de gym/entrenamiento personal. Tiene área pública (landing, tienda) y área privada para alumnos y coaches.
+## Que es
+App de gestion de gym/entrenamiento personal. Area publica (landing, tienda) y area privada para alumnos y coaches.
 
 ## Stack
-- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Framer Motion, Lucide React
+- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Framer Motion, Lucide React, recharts
 - **Backend:** NestJS 11, TypeORM, better-sqlite3 (SQLite), JWT con Passport
 - **Puerto backend:** 3000 | **Puerto frontend:** 3001 (`npm run dev -- -p 3001`)
 
-## Cómo correr el proyecto
+## Correr el proyecto
 ```bash
 # Terminal 1 — Backend
-cd gym-backend
-npm install
-npm run start:dev
+cd gym-backend && npm install && npm run start:dev
 
 # Terminal 2 — Frontend
-cd gym-frontend
-npm install
-npm run dev -- -p 3001
+cd gym-frontend && npm install && npm run dev -- -p 3001
 ```
 
-## Estructura del repo
+## Estructura
+
 ```
-Gym app/
-├── gym-backend/          # NestJS API
-│   └── src/
-│       ├── auth/         # JWT login/register, PATCH /auth/profile
-│       ├── users/        # Entidad User (id, email, name, password, role)
-│       ├── products/     # Tienda — seed automático al iniciar
-│       ├── training/     # Tipos → Etapas → Ejercicios → Logs de KG
-│       ├── measurements/ # Medidas corporales en CM
-│       ├── goals/        # Objetivos del alumno
-│       ├── protocols/    # Guías redactadas por el coach
-│       └── payments/     # Registro de pagos/cuotas
+gymsanti/
+├── gym-backend/src/
+│   ├── auth/         # login, register, profile, DELETE account
+│   ├── users/        # User entity (id, email, name, password, role, coachId)
+│   ├── products/     # Tienda — seed automatico
+│   ├── training/     # Tipos → Etapas → Ejercicios → Logs (legacy)
+│   ├── routines/     # Rutinas coach → alumno (dias + ejercicios + logs KG)
+│   ├── nutrition/    # Planes alimenticios coach → alumno (dias + comidas + macros)
+│   ├── coach/        # Asignar/quitar alumnos, ver estudiantes
+│   ├── measurements/ # Medidas corporales en CM
+│   ├── goals/        # Objetivos con toggle
+│   ├── protocols/    # Guias escritas por coach
+│   └── payments/     # Cuotas con estado y pago
 │
-└── gym-frontend/         # Next.js
-    └── src/
-        ├── app/
-        │   ├── page.tsx              # Landing pública
-        │   ├── store/page.tsx        # Tienda PÚBLICA (sin auth requerida)
-        │   ├── (auth)/login/         # Login
-        │   ├── (auth)/register/      # Registro
-        │   └── (app)/                # Layout con sidebar — requiere auth
-        │       ├── dashboard/        # Resumen macros
-        │       ├── routines/         # Tipo → Etapa → Ejercicios → KG
-        │       ├── measurements/     # Medidas CM con historial
-        │       ├── goals/            # Objetivos con toggle completado
-        │       ├── protocols/        # Lectura (todos) / Edición (coach/admin)
-        │       ├── payments/         # Cuotas con estados y checkout
-        │       ├── profile/          # Editar nombre y contraseña
-        │       └── settings/         # Preferencias UI
-        ├── lib/
-        │   ├── auth.tsx    # AuthContext — useAuth() hook
-        │   ├── cart.tsx    # CartContext — useCart() hook
-        │   └── api.ts      # authFetch() helper con Bearer token
-        ├── components/shared/sidebar.tsx
-        └── middleware.ts   # Protege rutas (app) sin cookie token
+└── gym-frontend/src/
+    ├── app/
+    │   ├── page.tsx              # Landing publica
+    │   ├── store/page.tsx        # Tienda publica (sin auth)
+    │   ├── (auth)/login|register/
+    │   └── (app)/                # Sidebar — requiere auth
+    │       ├── dashboard/
+    │       ├── routines/         # Rutina del alumno + log KG
+    │       ├── nutrition/        # Plan alimenticio del alumno
+    │       ├── measurements/     # Medidas CM + historial
+    │       ├── goals/
+    │       ├── protocols/
+    │       ├── payments/
+    │       ├── profile/
+    │       ├── settings/         # Incluye eliminar cuenta real
+    │       └── coach/students/   # Panel coach
+    │           └── [id]/         # Hub alumno → /routine | /nutrition
+    ├── lib/auth.tsx              # AuthContext + useAuth()
+    ├── lib/cart.tsx              # CartContext + useCart()
+    ├── lib/api.ts                # authFetch() con Bearer token
+    └── middleware.ts             # Protege rutas (app)
 ```
 
-## Base de datos
-SQLite — archivo `gym-backend/gymcore.db` (se crea automáticamente).
-`synchronize: true` en TypeORM — las tablas se crean/actualizan solas al iniciar.
+## DB
+SQLite — `gym-backend/gymcore.db` (se crea solo). `synchronize: true`.
 
-**Seed automático al primer arranque:**
-- 12 productos (suplementos, vitaminas, dulces proteicos)
-- 4 tipos de entrenamiento con etapas y ejercicios
-- 4 protocolos saludables de ejemplo
+Seed automatico al primer arranque: 12 productos, 4 tipos de entrenamiento, 4 protocolos.
 
-## Roles de usuario
+## Roles
 - `user` — alumno (default al registrarse)
-- `coach` — puede crear/editar/eliminar protocolos
-- `admin` — igual que coach
+- `coach` / `admin` — puede crear rutinas, planes nutricionales, editar protocolos
 
-Para cambiar el rol de un usuario hay que hacerlo directo en la DB por ahora (no hay panel admin todavía).
+Cambiar rol: directo en DB (no hay panel admin todavia).
 
 ## Auth
-- JWT en `localStorage` + cookie (para el middleware de Next.js)
-- Token dura 7 días
-- Secret: variable de entorno `JWT_SECRET` (default: `gymcore_secret_dev` — cambiar en producción)
+JWT en `localStorage` + cookie. Token 7 dias. Secret: `JWT_SECRET` (default: `gymcore_secret_dev`).
 
 ## Endpoints principales
-| Método | Ruta | Auth | Descripción |
+
+| Metodo | Ruta | Auth | Descripcion |
 |--------|------|------|-------------|
 | POST | /auth/register | No | Registro |
-| POST | /auth/login | No | Login → devuelve JWT |
-| GET | /auth/me | Sí | Usuario actual |
-| PATCH | /auth/profile | Sí | Cambiar nombre/contraseña |
-| GET | /products | No | Lista productos (query: ?category=) |
-| GET | /training/types | No | Tipos de entrenamiento |
-| GET | /training/types/:id | No | Tipo con etapas y ejercicios |
-| POST | /training/log | Sí | Registrar KG de un ejercicio |
-| GET/POST | /measurements | Sí | Medidas corporales |
-| GET/POST | /goals | Sí | Objetivos |
-| PATCH | /goals/:id/toggle | Sí | Marcar objetivo como logrado |
-| GET/POST | /protocols | Sí | Protocolos |
-| PUT | /protocols/:id | Sí | Editar (coach/admin) |
-| GET/POST | /payments | Sí | Pagos/cuotas |
-| PATCH | /payments/:id/pay | Sí | Marcar como pagado |
+| POST | /auth/login | No | Login → JWT |
+| GET | /auth/me | Si | Usuario actual |
+| PATCH | /auth/profile | Si | Cambiar nombre/password |
+| DELETE | /auth/account | Si | Eliminar cuenta |
+| GET | /products | No | Lista productos (?category=) |
+| GET | /routines/my | Si | Rutina activa del alumno |
+| POST | /routines/exercises/:id/log | Si | Log KG ejercicio |
+| GET | /routines/exercises/:id/logs | Si | Historial logs (ultimos 20) |
+| GET | /routines/coach/students/:id/all | Si (coach) | Rutinas de un alumno |
+| POST | /routines/coach/students/:id | Si (coach) | Crear rutina |
+| GET | /nutrition/my | Si | Plan nutricional del alumno |
+| POST | /nutrition/coach/students/:id | Si (coach) | Crear plan |
+| GET | /coach/students | Si (coach) | Mis alumnos |
+| POST | /coach/students/:id/assign | Si (coach) | Asignar alumno |
+| DELETE | /coach/students/:id | Si (coach) | Quitar alumno |
+| GET | /measurements | Si | Todas las medidas (con date) |
+| GET | /measurements/latest | Si | Ultima medida |
+| POST | /measurements | Si | Nueva medida |
+| GET/POST | /goals | Si | Objetivos |
+| PATCH | /goals/:id/toggle | Si | Toggle completado |
+| GET/POST | /protocols | Si | Protocolos |
+| PUT | /protocols/:id | Si (coach) | Editar |
+| GET/POST | /payments | Si | Pagos/cuotas |
+| PATCH | /payments/:id/pay | Si | Marcar pagado |
 
 ## CORS
-El backend tiene CORS configurado para `http://localhost:3001`. Si cambiás el puerto del frontend, actualizá `gym-backend/src/main.ts`.
+Configurado para `http://localhost:3001`. Si cambia puerto, actualizar `gym-backend/src/main.ts`.
 
-## Lo que queda por hacer (ideas futuras)
-- Panel de administración para coaches (asignar tipo de entrenamiento a alumnos)
+## Pendiente
+- Graficos de progreso en medidas y KG (recharts instalado, pendiente implementacion)
+- Modo claro en settings (placeholder)
+- Panel admin para cambiar roles
 - Notificaciones reales
-- Integración con MercadoPago para pagos
-- Modo claro en settings (actualmente solo placeholder)
-- Eliminar cuenta en settings (actualmente solo placeholder)
-- Gráficos de progreso en medidas y KG
+- MercadoPago
