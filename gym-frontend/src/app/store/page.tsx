@@ -12,7 +12,7 @@ type Category = "todos" | "suplementos" | "vitaminas" | "dulces";
 
 interface Product {
   id: number; name: string; description: string;
-  price: number; category: string; imageEmoji: string; imageUrl?: string; stock: number;
+  price: number; category: string; imageEmoji: string; imageUrl?: string; imageUrls?: string[]; stock: number;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -38,6 +38,8 @@ export default function StorePage() {
   const [checkoutDone, setCheckoutDone] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [addedProduct, setAddedProduct] = useState<number | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
+  const [detail, setDetail] = useState<{ product: Product; imageIndex: number } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -56,11 +58,18 @@ export default function StorePage() {
   const checkout = async () => {
     if (!user) return;
     setCheckingOut(true);
+    setCheckoutError("");
     const description = items.map((i) => `${i.name} x${i.quantity}`).join(", ");
-    await authFetch("/payments", {
+    const response = await authFetch("/payments", {
       method: "POST",
       body: JSON.stringify({ description: `Compra tienda: ${description}`, amount: total, items: items.map((item) => ({ productId: item.id, quantity: item.quantity })), period: new Date().toLocaleDateString("es-AR", { month: "long", year: "numeric" }) }),
     });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      setCheckoutError(body?.message || "No se pudo confirmar la compra. Revisá el stock disponible.");
+      setCheckingOut(false);
+      return;
+    }
     clear();
     setCheckingOut(false);
     setCheckoutDone(true);
@@ -140,9 +149,9 @@ export default function StorePage() {
                 return (
                   <Card key={product.id} className="bg-zinc-900 border-zinc-800 hover:border-zinc-600 transition-colors overflow-hidden group">
                     <CardContent className="p-0">
-                      <div className="flex h-40 items-center justify-center overflow-hidden bg-zinc-800 text-6xl group-hover:scale-110 transition-transform">
-                        {product.imageUrl ? <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : product.imageEmoji}
-                      </div>
+                      <button type="button" onClick={() => setDetail({ product, imageIndex: 0 })} className="flex h-40 w-full items-center justify-center overflow-hidden bg-zinc-800 text-6xl group-hover:scale-110 transition-transform">
+                        {(product.imageUrls?.[0] || product.imageUrl) ? <img src={product.imageUrls?.[0] || product.imageUrl} alt={product.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : product.imageEmoji}
+                      </button>
                       <div className="p-4 space-y-3">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${CATEGORY_COLORS[product.category] || "bg-zinc-800 text-zinc-400"}`}>
                           {CATEGORY_LABELS[product.category] || product.category}
@@ -203,6 +212,7 @@ export default function StorePage() {
               </div>
             ) : (
               <>
+                {checkoutError && <p className="mx-6 mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">{checkoutError}</p>}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4">
@@ -252,6 +262,18 @@ export default function StorePage() {
           </div>
         </div>
       )}
+      {detail && (() => {
+        const images = detail.product.imageUrls?.length ? detail.product.imageUrls : detail.product.imageUrl ? [detail.product.imageUrl] : [];
+        const image = images[detail.imageIndex];
+        return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setDetail(null)}>
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-xl font-black">{detail.product.name}</h2><button type="button" onClick={() => setDetail(null)} aria-label="Cerrar detalle" className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"><X className="h-5 w-5" /></button></div>
+            <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-xl bg-zinc-800 text-7xl sm:h-96">{image ? <img src={image} alt={detail.product.name} className="h-full w-full object-contain" /> : detail.product.imageEmoji}</div>
+            {images.length > 1 && <div className="mt-3 flex justify-center gap-2 overflow-x-auto">{images.map((url, index) => <button type="button" key={url} onClick={() => setDetail({ ...detail, imageIndex: index })} className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 ${index === detail.imageIndex ? "border-fuchsia-500" : "border-zinc-700"}`}><img src={url} alt="" className="h-full w-full object-cover" /></button>)}</div>}
+            <div className="mt-5 space-y-2"><span className="text-xs font-bold uppercase tracking-wide text-fuchsia-400">{CATEGORY_LABELS[detail.product.category] || detail.product.category}</span><p className="text-zinc-300">{detail.product.description}</p><p className="text-2xl font-black">{fmt(detail.product.price)}</p><p className="text-sm text-zinc-400">{detail.product.stock > 0 ? `${detail.product.stock} unidades disponibles` : "Sin stock"}</p></div>
+          </div>
+        </div>;
+      })()}
     </div>
   );
 }

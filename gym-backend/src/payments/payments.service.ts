@@ -30,6 +30,7 @@ export class PaymentsService {
         if (!product || !product.available) throw new BadRequestException('Producto no disponible');
         if (product.stock < data.items![index].quantity) throw new ConflictException(`Stock insuficiente para ${product.name}`);
       });
+      const amount = products.reduce((total, product, index) => total + Number(product!.price) * data.items![index].quantity, 0);
       for (let index = 0; index < products.length; index++) {
         const product = products[index]!;
         const quantity = data.items![index].quantity;
@@ -37,7 +38,7 @@ export class PaymentsService {
         await manager.save(Product, product);
         await manager.save(StockMovement, manager.create(StockMovement, { type: 'salida', quantity, reason: 'Compra en tienda', productId: product.id, userId }));
       }
-      const p = manager.create(Payment, { ...data, userId });
+      const p = manager.create(Payment, { ...data, amount, userId });
       delete (p as Payment & { items?: unknown }).items;
       return manager.save(Payment, p);
     });

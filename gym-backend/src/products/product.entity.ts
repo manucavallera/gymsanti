@@ -28,6 +28,9 @@ export class Product {
   @Column({ nullable: true })
   imageUrl: string;
 
+  @Column('simple-json', { nullable: true })
+  imageUrls: string[];
+
   @Column({ type: 'integer', default: 0 })
   stock: number;
 
