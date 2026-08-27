@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Dumbbell, Users, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-
-const API = "http://localhost:3000";
+import { API } from "@/lib/api";
 
 interface Coach { id: number; name: string; email: string; }
 
