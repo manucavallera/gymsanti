@@ -120,8 +120,21 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   body {
     @apply text-foreground;
+    overflow-x: hidden;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }

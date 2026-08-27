@@ -15,11 +15,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className="dark">
       <body className={`${inter.className} text-white`}>
         <div
-          className="fixed inset-0 -z-10"
+          className="fixed inset-0 -z-10 bg-black"
           style={{
-            backgroundImage: "url('/bg-dark.jpg'), url('/bg-pink.jpg')",
-            backgroundSize: "50% 100%, 50% 100%",
-            backgroundPosition: "left top, right top",
+            backgroundImage: "linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.7)), url('/bg-dark.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         />

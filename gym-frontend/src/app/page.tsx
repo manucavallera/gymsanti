@@ -32,23 +32,23 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen text-white">
       {/* Navbar */}
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-fuchsia-600 rounded-lg flex items-center justify-center font-black text-sm text-white">
             G
           </div>
-          <span className="text-xl font-black tracking-widest uppercase">GYM CORE</span>
+          <span className="text-lg font-black tracking-widest uppercase sm:text-xl">GYM CORE</span>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="text-zinc-400 hover:text-white transition-colors px-4 py-2 text-sm font-medium"
+            className="px-2 py-2 text-xs font-medium text-zinc-400 transition-colors hover:text-white sm:px-4 sm:text-sm"
           >
             Iniciar sesión
           </Link>
           <Link
             href="/register"
-            className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+            className="rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-fuchsia-700 sm:px-4 sm:text-sm"
           >
             Registrarse
           </Link>
@@ -56,16 +56,16 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+      <section className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
         <span className="inline-block bg-fuchsia-600/20 text-fuchsia-400 text-xs font-semibold px-3 py-1 rounded-full mb-6 border border-fuchsia-600/30 uppercase tracking-widest">
           Entrenamiento personalizado
         </span>
-        <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight uppercase">
+        <h1 className="mb-6 text-4xl font-black uppercase leading-tight tracking-tight sm:text-5xl md:text-7xl">
           Tu cuerpo,
           <br />
           <span className="text-fuchsia-500">tu método.</span>
         </h1>
-        <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-10">
+        <p className="mx-auto mb-10 max-w-2xl text-base text-zinc-400 sm:text-lg md:text-xl">
           Rutinas diseñadas por coaches, seguimiento de progreso, nutrición y suplementos.
           Todo en un solo lugar.
         </p>
@@ -88,7 +88,7 @@ export default function LandingPage() {
       {/* Features strip */}
       <section className="bg-zinc-900/50 border-y border-white/10 py-20">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid gap-4 sm:gap-8 md:grid-cols-3">
             <div className="flex flex-col items-center text-center p-6">
               <div className="w-14 h-14 bg-fuchsia-600/20 rounded-2xl flex items-center justify-center mb-4 border border-fuchsia-600/30">
                 <Dumbbell className="w-7 h-7 text-fuchsia-500" />
@@ -122,12 +122,12 @@ export default function LandingPage() {
 
       {/* Quiénes somos */}
       <section id="quienes-somos" className="max-w-6xl mx-auto px-6 py-24">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
+        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <div>
             <span className="text-fuchsia-500 text-sm font-semibold uppercase tracking-widest mb-3 block">
               Quiénes somos
             </span>
-            <h2 className="text-4xl font-black mb-6 uppercase">
+            <h2 className="mb-6 text-3xl font-black uppercase sm:text-4xl">
               Entrenadores reales,<br />resultados reales.
             </h2>
             <p className="text-zinc-400 leading-relaxed mb-4">
@@ -165,7 +165,7 @@ export default function LandingPage() {
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="bg-zinc-900 border border-white/10 rounded-2xl p-6 text-center hover:border-fuchsia-600/40 transition-colors"
+                className="rounded-2xl border border-white/10 bg-zinc-900 p-4 text-center transition-colors hover:border-fuchsia-600/40 sm:p-6"
               >
                 <p className="text-3xl font-black text-fuchsia-500 mb-1">{stat.value}</p>
                 <p className="text-zinc-400 text-sm">{stat.label}</p>

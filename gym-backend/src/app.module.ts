@@ -21,6 +21,7 @@ import { Protocol } from './protocols/protocol.entity';
 import { Payment } from './payments/payment.entity';
 import { Routine, RoutineDay, RoutineExercise, RoutineExerciseLog } from './routines/routine.entities';
 import { MealPlan, MealDay, Meal } from './nutrition/nutrition.entities';
+import { StockMovement } from './products/stock-movement.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MealPlan, MealDay, Meal } from './nutrition/nutrition.entities';
         Measurement, Goal, Protocol, Payment,
         Routine, RoutineDay, RoutineExercise, RoutineExerciseLog,
         MealPlan, MealDay, Meal,
+        StockMovement,
       ],
       synchronize: true,
     }),

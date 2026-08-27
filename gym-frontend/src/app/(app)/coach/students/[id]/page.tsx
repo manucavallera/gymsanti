@@ -103,7 +103,7 @@ export default function CoachStudentPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Link href="/coach/students"
           className="p-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-colors">
           <ArrowLeft className="w-4 h-4" />
@@ -213,7 +213,7 @@ export default function CoachStudentPage() {
       {/* Pagos */}
       {tab === "pagos" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Pagos del alumno</p>
             <button onClick={() => setShowPayForm((v) => !v)}
               className="flex items-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-colors">

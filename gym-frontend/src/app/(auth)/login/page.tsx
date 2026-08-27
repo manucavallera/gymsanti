@@ -38,7 +38,7 @@ export default function LoginPage() {
           <p className="text-zinc-400 mt-2">Ingresá a tu cuenta para continuar</p>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:p-8">
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg mb-6">
               {error}

@@ -100,7 +100,7 @@ export default function MeasurementsPage() {
         <Card className="bg-zinc-900 border-zinc-700">
           <CardHeader><CardTitle>Nueva medicion</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 md:grid-cols-3">
               {FIELDS.map((f) => (
                 <div key={f.key}>
                   <label className="text-xs text-zinc-400 mb-1 block">{f.label}</label>
@@ -156,7 +156,7 @@ export default function MeasurementsPage() {
               <p className="text-zinc-500 text-sm mb-3">
                 Ultima medicion — {new Date(latest.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {FIELDS.map((f) => {
                   const val = (latest as any)[f.key];
                   const diff = getDiff(f.key);

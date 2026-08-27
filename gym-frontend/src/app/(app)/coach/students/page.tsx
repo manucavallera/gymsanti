@@ -41,7 +41,7 @@ export default function CoachStudentsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-3xl font-black uppercase tracking-tight">Mis Alumnos</h2>
           <p className="text-zinc-400 mt-1">{students.length} alumno{students.length !== 1 ? "s" : ""} asignado{students.length !== 1 ? "s" : ""}</p>
@@ -81,7 +81,7 @@ export default function CoachStudentsPage() {
                   <p className="text-zinc-500 text-sm">{s.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Link href={`/coach/students/${s.id}/routine`}
                   className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 hover:bg-fuchsia-600/20 hover:text-fuchsia-400 rounded-lg text-sm text-zinc-400 transition-colors">
                   <Dumbbell className="w-3.5 h-3.5" /> Rutina

@@ -203,7 +203,7 @@ export default function CoachStudentNutritionPage() {
   const sortedDays = plan ? [...plan.days].sort((a, b) => a.order - b.order) : [];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href={`/coach/students/${studentId}`}
           className="p-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-colors">
@@ -320,7 +320,7 @@ export default function CoachStudentNutritionPage() {
 
             return (
               <div key={day.id} className="bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
                   <button onClick={() => setOpenDay(isOpen ? null : day.id)} className="flex items-center gap-3 flex-1 text-left">
                     <div className="w-8 h-8 bg-fuchsia-600/20 border border-fuchsia-600/30 rounded-lg flex items-center justify-center">
                       <UtensilsCrossed className="w-4 h-4 text-fuchsia-400" />

@@ -25,6 +25,12 @@ export class Product {
   @Column({ nullable: true })
   imageEmoji: string;
 
+  @Column({ nullable: true })
+  imageUrl: string;
+
+  @Column({ type: 'integer', default: 0 })
+  stock: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }

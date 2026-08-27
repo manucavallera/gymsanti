@@ -55,7 +55,7 @@ export default function RegisterPage() {
           <p className="text-zinc-400 mt-2">Empezá tu camino hoy</p>
         </div>
 
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8">
+        <div className="rounded-2xl border border-white/10 bg-zinc-900 p-5 sm:p-8">
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg mb-6">
               {error}

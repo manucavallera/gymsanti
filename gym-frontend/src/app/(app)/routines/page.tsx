@@ -95,7 +95,7 @@ export default function RoutinesPage() {
                 onClick={() => setOpenDay(isOpen ? null : day.id)}
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-800/50 transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="w-8 h-8 bg-fuchsia-600/20 border border-fuchsia-600/30 rounded-lg flex items-center justify-center">
                     <Dumbbell className="w-4 h-4 text-fuchsia-400" />
                   </div>

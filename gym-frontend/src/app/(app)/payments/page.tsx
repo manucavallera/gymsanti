@@ -82,7 +82,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* Resumen */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
           <p className="text-zinc-500 text-sm mb-1">Total pagado</p>
           <p className="text-2xl font-black text-green-400">{fmt(totalPaid)}</p>
@@ -124,7 +124,7 @@ export default function PaymentsPage() {
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
                 <div>
                   <label className="text-xs text-zinc-400 mb-1 block">Monto *</label>
                   <input type="number" placeholder="0"

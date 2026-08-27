@@ -76,7 +76,7 @@ function StudentDashboard() {
           <Link href="/nutrition" className="text-fuchsia-400 text-xs hover:text-fuchsia-300">Ver plan →</Link>
         </div>
         {plan ? (
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-4">
             <MacroCard title="Calorias" value={plan.dailyCalories} unit="kcal" target={null} icon={Flame} color="text-orange-500" />
             <MacroCard title="Proteina" value={plan.dailyProtein} unit="g" target={null} icon={Zap} color="text-fuchsia-500" />
             <MacroCard title="Carbos" value={plan.dailyCarbs} unit="g" target={null} icon={Utensils} color="text-green-500" />
@@ -277,7 +277,7 @@ function CoachDashboard() {
       {/* Accesos rapidos */}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">Accesos rapidos</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
           <Link href="/protocols"
             className="bg-zinc-900 border border-zinc-800 hover:border-fuchsia-600/30 rounded-xl p-4 transition-colors group">
             <TrendingUp className="w-5 h-5 text-fuchsia-500 mb-2" />

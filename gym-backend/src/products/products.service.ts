@@ -1,7 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product, ProductCategory } from './product.entity';
+import { StockMovement, StockMovementType } from './stock-movement.entity';
 
 const SEED_PRODUCTS = [
   { name: 'Whey Protein Chocolate', description: 'Proteína de suero de leche, 2kg. 24g de proteína por porción. Sin azúcar agregada.', price: 12500, category: 'suplementos', imageEmoji: '🥛' },
@@ -23,6 +24,8 @@ export class ProductsService implements OnModuleInit {
   constructor(
     @InjectRepository(Product)
     private readonly repo: Repository<Product>,
+    @InjectRepository(StockMovement)
+    private readonly movementRepo: Repository<StockMovement>,
   ) {}
 
   async onModuleInit() {
@@ -40,5 +43,57 @@ export class ProductsService implements OnModuleInit {
 
   findOne(id: number) {
     return this.repo.findOne({ where: { id } });
+  }
+
+  findAllAdmin() {
+    return this.repo.find({ order: { available: 'DESC', category: 'ASC', name: 'ASC' } });
+  }
+
+  async create(data: Partial<Product>) {
+    this.validateProduct(data);
+    return this.repo.save(this.repo.create({ ...data, stock: data.stock ?? 0 }));
+  }
+
+  async update(id: number, data: Partial<Product>) {
+    const product = await this.repo.findOne({ where: { id } });
+    if (!product) throw new NotFoundException('Producto no encontrado');
+    this.validateProduct(data, true);
+    await this.repo.update(id, data);
+    return this.repo.findOne({ where: { id } });
+  }
+
+  async hide(id: number) {
+    const product = await this.repo.findOne({ where: { id } });
+    if (!product) throw new NotFoundException('Producto no encontrado');
+    await this.repo.update(id, { available: false });
+    return { success: true };
+  }
+
+  getMovements(productId: number) {
+    return this.movementRepo.find({ where: { productId }, order: { createdAt: 'DESC' } });
+  }
+
+  async addMovement(productId: number, userId: number, data: { type: StockMovementType; quantity: number; reason?: string }) {
+    const product = await this.repo.findOne({ where: { id: productId } });
+    if (!product) throw new NotFoundException('Producto no encontrado');
+    if (!['entrada', 'salida', 'ajuste'].includes(data.type) || !Number.isInteger(data.quantity) || data.quantity < 0) {
+      throw new BadRequestException('Movimiento de stock inválido');
+    }
+    if ((data.type === 'entrada' || data.type === 'salida') && data.quantity === 0) {
+      throw new BadRequestException('La cantidad debe ser mayor a cero');
+    }
+    const nextStock = data.type === 'entrada' ? product.stock + data.quantity : data.type === 'salida' ? product.stock - data.quantity : data.quantity;
+    if (nextStock < 0) throw new ConflictException('Stock insuficiente');
+    await this.repo.update(productId, { stock: nextStock });
+    return this.movementRepo.save(this.movementRepo.create({ ...data, productId, userId, reason: data.reason || '' }));
+  }
+
+  private validateProduct(data: Partial<Product>, partial = false) {
+    const categories: ProductCategory[] = ['suplementos', 'vitaminas', 'dulces'];
+    if (!partial && !data.name?.trim()) throw new BadRequestException('El nombre es obligatorio');
+    if (data.name !== undefined && !data.name.trim()) throw new BadRequestException('El nombre es obligatorio');
+    if (data.price !== undefined && (typeof data.price !== 'number' || data.price < 0)) throw new BadRequestException('Precio inválido');
+    if (data.stock !== undefined && (!Number.isInteger(data.stock) || data.stock < 0)) throw new BadRequestException('Stock inválido');
+    if (data.category !== undefined && !categories.includes(data.category as ProductCategory)) throw new BadRequestException('Categoría inválida');
   }
 }
