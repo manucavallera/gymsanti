@@ -24,10 +24,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
     const closeMenu = window.setTimeout(() => setMobileMenuOpen(false), 0);
     return () => window.clearTimeout(closeMenu);
-  }, [pathname, mobileMenuOpen]);
+  }, [pathname]);
 
   if (loading) {
     return (
