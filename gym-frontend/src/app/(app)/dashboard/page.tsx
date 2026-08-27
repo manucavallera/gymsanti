@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Flame, Zap, Utensils, Activity, Dumbbell, Ruler, Users, ChevronRight, TrendingUp, UtensilsCrossed } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Flame, Zap, Utensils, Activity, Dumbbell, Ruler, Users, ChevronRight, TrendingUp, UtensilsCrossed, CalendarDays, ArrowUpRight, CheckCircle2, Package } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { authFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
@@ -12,7 +13,7 @@ interface Routine { id: number; name: string; days: RoutineDay[]; }
 interface Measurement { id: number; date: string; weight: number; }
 interface Student { id: number; name: string; email: string; }
 
-function MacroCard({ title, value, unit, target, icon: Icon, color }: { title: string; value: number | null; unit: string; target: number | null; icon: any; color: string }) {
+function MacroCard({ title, value, unit, target, icon: Icon, color }: { title: string; value: number | null; unit: string; target: number | null; icon: LucideIcon; color: string }) {
   const pct = value && target ? Math.min(100, Math.round((value / target) * 100)) : null;
   return (
     <Card className="bg-zinc-900 border-zinc-800">
@@ -64,9 +65,18 @@ function StudentDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-black uppercase tracking-tight">Hola, {user?.name?.split(" ")[0]}</h2>
-        <p className="text-zinc-400 mt-1">Tu resumen de hoy</p>
+      <div className="relative overflow-hidden rounded-3xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/70 via-zinc-900 to-zinc-950 p-5 sm:p-7">
+        <div className="relative z-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+          <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-fuchsia-300">Panel personal</p><h2 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">Hola, {user?.name?.split(" ")[0]}</h2><p className="mt-2 text-zinc-300">Tu resumen de hoy está listo.</p></div>
+          <div className="flex items-center gap-2 text-sm text-zinc-300"><CalendarDays className="h-4 w-4 text-fuchsia-400" />{new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}</div>
+        </div>
+        <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-fuchsia-600/20 blur-3xl" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Link href="/routines" className="group rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-fuchsia-600/40"><Dumbbell className="mb-3 h-5 w-5 text-fuchsia-400" /><p className="text-xs text-zinc-500">Rutina activa</p><p className="mt-1 font-bold">{routine ? `${routine.days.length} días disponibles` : "Sin asignar"}</p><ArrowUpRight className="mt-3 h-4 w-4 text-zinc-600 transition-colors group-hover:text-fuchsia-400" /></Link>
+        <Link href="/nutrition" className="group rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-fuchsia-600/40"><UtensilsCrossed className="mb-3 h-5 w-5 text-green-400" /><p className="text-xs text-zinc-500">Nutrición</p><p className="mt-1 font-bold">{plan ? `${plan.dailyCalories} kcal objetivo` : "Sin plan asignado"}</p><ArrowUpRight className="mt-3 h-4 w-4 text-zinc-600 transition-colors group-hover:text-fuchsia-400" /></Link>
+        <Link href="/measurements" className="group rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-fuchsia-600/40"><CheckCircle2 className="mb-3 h-5 w-5 text-yellow-400" /><p className="text-xs text-zinc-500">Seguimiento</p><p className="mt-1 font-bold">{measurement ? "Última medición cargada" : "Registrá tu primera medición"}</p><ArrowUpRight className="mt-3 h-4 w-4 text-zinc-600 transition-colors group-hover:text-fuchsia-400" /></Link>
       </div>
 
       {/* Macros */}
@@ -196,9 +206,9 @@ function CoachDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-black uppercase tracking-tight">Hola, {user?.name?.split(" ")[0]}</h2>
-        <p className="text-zinc-400 mt-1">Panel de coach</p>
+      <div className="relative overflow-hidden rounded-3xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-950/70 via-zinc-900 to-zinc-950 p-5 sm:p-7">
+        <div className="relative z-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-fuchsia-300">Panel de gestión</p><h2 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">Hola, {user?.name?.split(" ")[0]}</h2><p className="mt-2 text-zinc-300">Acompañá el progreso de tus alumnos.</p></div><Link href="/coach/students" className="inline-flex items-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-2.5 text-sm font-bold hover:bg-fuchsia-700">Ver alumnos <ArrowUpRight className="h-4 w-4" /></Link></div>
+        <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-fuchsia-600/20 blur-3xl" />
       </div>
 
       {/* Stats */}
@@ -290,6 +300,12 @@ function CoachDashboard() {
             <p className="font-bold text-sm">Gestionar alumnos</p>
             <p className="text-zinc-500 text-xs">Asignar, editar y ver progreso</p>
           </Link>
+          {user?.role === "admin" && <Link href="/coach/products"
+            className="group rounded-xl border border-zinc-800 bg-zinc-900 p-4 transition-colors hover:border-fuchsia-600/30">
+            <Package className="text-fuchsia-500 mb-2 h-5 w-5" />
+            <p className="font-bold text-sm">Productos y stock</p>
+            <p className="text-zinc-500 text-xs">Administrar catálogo</p>
+          </Link>}
         </div>
       </div>
     </div>
