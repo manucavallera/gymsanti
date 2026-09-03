@@ -47,13 +47,13 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-5 sm:space-y-6">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center">
           <Shield className="w-5 h-5 text-yellow-400" />
         </div>
         <div>
-          <h2 className="text-3xl font-black uppercase tracking-tight">Panel Admin</h2>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">Panel Admin</h2>
           <p className="text-zinc-400 text-sm">{users.length} usuarios registrados</p>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default function AdminPage() {
       ) : (
         <div className="space-y-2">
           {filtered.map((u) => (
-            <div key={u.id} className="bg-zinc-900 border border-white/10 rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+            <div key={u.id} className="bg-zinc-900 border border-white/10 rounded-2xl px-4 sm:px-5 py-4 flex items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
                   {u.name.charAt(0).toUpperCase()}
@@ -93,7 +93,7 @@ export default function AdminPage() {
                     <button
                       onClick={() => setOpenMenu(openMenu === u.id ? null : u.id)}
                       disabled={changing === u.id}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${ROLE_COLORS[u.role]} hover:opacity-80 disabled:opacity-40`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${ROLE_COLORS[u.role]} hover:opacity-80 disabled:opacity-40`}
                     >
                       {changing === u.id ? "..." : ROLE_LABELS[u.role]}
                       <ChevronDown className="w-3 h-3" />

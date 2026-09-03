@@ -50,7 +50,7 @@ export default function StorePage() {
   const inCart = (id: number) => items.find((i) => i.id === id);
 
   const addToCart = (product: Product) => {
-    add({ id: product.id, name: product.name, price: product.price, imageEmoji: product.imageEmoji });
+    add({ id: product.id, name: product.name, price: product.price, imageEmoji: product.imageEmoji, stock: product.stock });
     setAddedProduct(product.id);
     window.setTimeout(() => setAddedProduct((current) => current === product.id ? null : current), 1600);
   };
@@ -168,7 +168,7 @@ export default function StorePage() {
                                   <Minus className="w-3 h-3" />
                                 </button>
                                 <span className="w-6 text-center text-sm font-bold">{cartItem.quantity}</span>
-                                <button type="button" disabled={cartItem.quantity >= product.stock} onClick={() => addToCart(product)} className="w-7 h-7 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40">
+                        <button type="button" aria-label={`Agregar otra unidad de ${product.name}`} disabled={cartItem.quantity >= product.stock} onClick={() => addToCart(product)} className="w-7 h-7 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40">
                                   <Plus className="w-3 h-3" />
                                 </button>
                               </div>
@@ -228,7 +228,7 @@ export default function StorePage() {
                           <Minus className="w-3 h-3" />
                         </button>
                         <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.id, item.quantity + 1)} className="w-7 h-7 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors">
+                        <button type="button" aria-label={`Agregar otra unidad de ${item.name}`} disabled={item.quantity >= item.stock} onClick={() => updateQty(item.id, item.quantity + 1)} className="w-7 h-7 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40">
                           <Plus className="w-3 h-3" />
                         </button>
                         <button onClick={() => remove(item.id)} className="text-zinc-600 hover:text-red-400 transition-colors ml-1">
@@ -270,7 +270,7 @@ export default function StorePage() {
             <div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-xl font-black">{detail.product.name}</h2><button type="button" onClick={() => setDetail(null)} aria-label="Cerrar detalle" className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"><X className="h-5 w-5" /></button></div>
             <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-xl bg-zinc-800 text-7xl sm:h-96">{image ? <img src={image} alt={detail.product.name} className="h-full w-full object-contain" /> : detail.product.imageEmoji}</div>
             {images.length > 1 && <div className="mt-3 flex justify-center gap-2 overflow-x-auto">{images.map((url, index) => <button type="button" key={url} onClick={() => setDetail({ ...detail, imageIndex: index })} className={`h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 ${index === detail.imageIndex ? "border-fuchsia-500" : "border-zinc-700"}`}><img src={url} alt="" className="h-full w-full object-cover" /></button>)}</div>}
-            <div className="mt-5 space-y-2"><span className="text-xs font-bold uppercase tracking-wide text-fuchsia-400">{CATEGORY_LABELS[detail.product.category] || detail.product.category}</span><p className="text-zinc-300">{detail.product.description}</p><p className="text-2xl font-black">{fmt(detail.product.price)}</p><p className="text-sm text-zinc-400">{detail.product.stock > 0 ? `${detail.product.stock} unidades disponibles` : "Sin stock"}</p></div>
+            <div className="mt-5 space-y-3"><span className="text-xs font-bold uppercase tracking-wide text-fuchsia-400">{CATEGORY_LABELS[detail.product.category] || detail.product.category}</span><p className="text-zinc-300">{detail.product.description}</p><p className="text-2xl font-black">{fmt(detail.product.price)}</p><p className="text-sm text-zinc-400">{detail.product.stock > 0 ? `${detail.product.stock} unidades disponibles` : "Sin stock"}</p><button type="button" disabled={detail.product.stock === 0} onClick={() => addToCart(detail.product)} className="w-full rounded-xl bg-fuchsia-600 py-3 text-sm font-bold text-white transition-colors hover:bg-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-40">{detail.product.stock === 0 ? "Sin stock" : addedProduct === detail.product.id ? "Agregado" : "Agregar al carrito"}</button></div>
           </div>
         </div>;
       })()}

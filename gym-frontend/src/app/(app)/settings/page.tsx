@@ -39,10 +39,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="w-full max-w-2xl mx-auto space-y-6 sm:space-y-8">
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-red-500/30 rounded-2xl p-8 max-w-sm w-full mx-4 space-y-5">
+          <div className="bg-zinc-900 border border-red-500/30 rounded-2xl p-5 sm:p-8 max-w-sm w-full mx-4 space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-red-400" />
@@ -72,7 +72,7 @@ export default function SettingsPage() {
         </div>
       )}
       <div>
-        <h2 className="text-3xl font-bold">Configuración</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">Configuración</h2>
         <p className="text-zinc-400 mt-1">Preferencias de tu cuenta</p>
       </div>
 
@@ -89,8 +89,8 @@ export default function SettingsPage() {
             { label: "Vencimiento de pagos", sub: "Avisame cuando se acerca la fecha de pago", value: notifPagos, set: setNotifPagos },
             { label: "Nuevos protocolos", sub: "Notificame cuando el coach publique un protocolo nuevo", value: notifProtocolos, set: setNotifProtocolos },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between">
-              <div>
+            <div key={item.label} className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
                 <p className="font-medium text-sm">{item.label}</p>
                 <p className="text-zinc-500 text-xs mt-0.5">{item.sub}</p>
               </div>
@@ -108,38 +108,38 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="font-medium text-sm">Idioma</p>
               <p className="text-zinc-500 text-xs mt-0.5">Idioma de la interfaz</p>
             </div>
             <select value={idioma} onChange={(e) => setIdioma(e.target.value)}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-fuchsia-500">
+              className="w-full sm:w-auto bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-fuchsia-500">
               <option value="es">Español</option>
               <option value="en">English</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="font-medium text-sm">Unidad de peso</p>
               <p className="text-zinc-500 text-xs mt-0.5">Para registros de ejercicios</p>
             </div>
             <select value={unidadPeso} onChange={(e) => setUnidadPeso(e.target.value)}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-fuchsia-500">
+              className="w-full sm:w-auto bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-fuchsia-500">
               <option value="kg">Kilogramos (kg)</option>
               <option value="lb">Libras (lb)</option>
             </select>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0">
               <p className="font-medium text-sm">Tema</p>
               <p className="text-zinc-500 text-xs mt-0.5">Apariencia de la app</p>
             </div>
-            <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 rounded-lg p-1">
-              <button className="flex items-center gap-1.5 bg-zinc-700 text-white text-xs px-3 py-1.5 rounded-md font-medium">
+            <div className="flex items-center gap-2 self-start bg-zinc-800 border border-zinc-700 rounded-lg p-1">
+              <button className="flex items-center gap-1.5 bg-zinc-700 text-white text-xs px-3 py-2 rounded-md font-medium">
                 <Moon className="w-3 h-3" /> Oscuro
               </button>
-              <button className="text-zinc-500 text-xs px-3 py-1.5 rounded-md font-medium hover:text-white transition-colors">
+              <button className="text-zinc-500 text-xs px-3 py-2 rounded-md font-medium hover:text-white transition-colors">
                 Claro
               </button>
             </div>

@@ -6,6 +6,7 @@ export interface CartItem {
   name: string;
   price: number;
   imageEmoji: string;
+  stock: number;
   quantity: number;
 }
 
@@ -27,7 +28,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const add = (product: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
-      if (existing) return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      if (existing) {
+        if (existing.quantity >= product.stock) return prev;
+        return prev.map((i) => i.id === product.id ? { ...i, stock: product.stock, quantity: i.quantity + 1 } : i);
+      }
+      if (product.stock <= 0) return prev;
       return [...prev, { ...product, quantity: 1 }];
     });
   };
@@ -36,7 +41,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQty = (id: number, qty: number) => {
     if (qty <= 0) { remove(id); return; }
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i));
+    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: Math.min(qty, i.stock) } : i));
   };
 
   const clear = () => setItems([]);

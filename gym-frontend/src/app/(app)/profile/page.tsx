@@ -56,20 +56,20 @@ export default function ProfilePage() {
   const ROLE_LABELS: Record<string, string> = { user: "Alumno", coach: "Coach", admin: "Admin" };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="w-full max-w-2xl mx-auto space-y-6 sm:space-y-8">
       <div>
-        <h2 className="text-3xl font-bold">Mi Perfil</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">Mi Perfil</h2>
         <p className="text-zinc-400 mt-1">Gestioná tu información personal</p>
       </div>
 
       {/* Avatar + info */}
-      <div className="flex items-center gap-5">
-        <div className="w-20 h-20 rounded-2xl bg-fuchsia-600 flex items-center justify-center text-3xl font-black">
+      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-fuchsia-600 flex items-center justify-center text-2xl sm:text-3xl font-black flex-shrink-0">
           {user?.name.charAt(0).toUpperCase()}
         </div>
-        <div>
-          <h3 className="text-2xl font-bold">{user?.name}</h3>
-          <p className="text-zinc-400">{user?.email}</p>
+        <div className="min-w-0">
+          <h3 className="text-xl sm:text-2xl font-bold truncate">{user?.name}</h3>
+          <p className="text-zinc-400 truncate">{user?.email}</p>
           <span className="inline-block mt-1 text-xs bg-fuchsia-600/20 text-fuchsia-400 border border-fuchsia-600/30 px-2 py-0.5 rounded-full">
             {ROLE_LABELS[user?.role || "user"]}
           </span>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
             </div>
           )}
           <button onClick={saveProfile} disabled={savingProfile || name === user?.name}
-            className="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
+            className="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
             {savingProfile ? "Guardando..." : "Guardar cambios"}
           </button>
         </CardContent>
@@ -133,7 +133,7 @@ export default function ProfilePage() {
             </div>
           )}
           <button onClick={savePassword} disabled={savingPass || !currentPassword || !newPassword || !confirmPassword}
-            className="bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
+            className="w-full sm:w-auto bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-colors">
             {savingPass ? "Actualizando..." : "Cambiar contraseña"}
           </button>
         </CardContent>
