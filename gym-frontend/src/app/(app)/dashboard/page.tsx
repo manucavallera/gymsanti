@@ -10,7 +10,7 @@ import Link from "next/link";
 interface NutritionPlan { id: number; name: string; dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFats: number; }
 interface RoutineDay { id: number; name: string; exercises: { id: number; name: string; sets: number; reps: string }[]; }
 interface Routine { id: number; name: string; days: RoutineDay[]; }
-interface Measurement { id: number; date: string; weight: number; }
+interface Measurement { id: number; date: string; weight: number | null; bmi: number | null; }
 interface Student { id: number; name: string; email: string; }
 
 function MacroCard({ title, value, unit, target, icon: Icon, color }: { title: string; value: number | null; unit: string; target: number | null; icon: LucideIcon; color: string }) {
@@ -167,22 +167,23 @@ function StudentDashboard() {
                       {new Date(measurement.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
                   </div>
-                  {measurement.weight && (
+                  {measurement.weight != null && (
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black">{parseFloat(String(measurement.weight))}</span>
+                      <span className="text-4xl font-black">{Number(measurement.weight)}</span>
                       <span className="text-zinc-500">kg</span>
+                      {measurement.bmi != null && <span className="ml-auto text-sm text-zinc-400">IMC <span className="font-bold text-white">{Number(measurement.bmi)}</span></span>}
                     </div>
                   )}
                   <Link href="/measurements"
                     className="block w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-white py-2 rounded-lg font-bold text-sm text-center transition-colors">
-                    Nueva medicion
+                    Ver medidas
                   </Link>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
                   <Ruler className="w-8 h-8 text-zinc-700" />
                   <p className="text-zinc-500 text-sm">Sin mediciones todavia</p>
-                  <Link href="/measurements" className="text-fuchsia-400 text-xs hover:text-fuchsia-300">Registrar primera medicion →</Link>
+                  <p className="text-zinc-600 text-xs">Tu coach las carga en tu próxima evaluación</p>
                 </div>
               )}
             </CardContent>

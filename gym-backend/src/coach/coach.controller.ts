@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoachService } from './coach.service';
 import { UserRole } from '../users/user.entity';
 import { CreateStudentDto, SetPasswordDto } from './dto';
+import { CreateMeasurementDto } from '../measurements/dto';
 
 function assertCoach(req: any) {
   if (req.user.role !== 'coach' && req.user.role !== 'admin') throw new ForbiddenException();
@@ -57,6 +58,24 @@ export class CoachController {
   getStudentMeasurements(@Request() req: any, @Param('id', ParseIntPipe) id: number) {
     assertCoach(req);
     return this.svc.getStudentMeasurements(req.user.id, id);
+  }
+
+  @Post('students/:id/measurements')
+  @UseGuards(JwtAuthGuard)
+  createStudentMeasurement(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: CreateMeasurementDto) {
+    assertCoach(req);
+    return this.svc.createStudentMeasurement(req.user.id, id, dto);
+  }
+
+  @Delete('students/:id/measurements/:measurementId')
+  @UseGuards(JwtAuthGuard)
+  deleteStudentMeasurement(
+    @Request() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('measurementId', ParseIntPipe) measurementId: number,
+  ) {
+    assertCoach(req);
+    return this.svc.deleteStudentMeasurement(req.user.id, id, measurementId);
   }
 
   @Get('students/:id/goals')

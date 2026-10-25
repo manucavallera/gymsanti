@@ -1,15 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, TrendingDown, TrendingUp, Minus, CheckCircle2, CreditCard, Clock, AlertCircle, Trash2, X, Plus, KeyRound } from "lucide-react";
+import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, CheckCircle2, CreditCard, Clock, AlertCircle, Trash2, X, Plus, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { authFetch, ensureOk } from "@/lib/api";
+import { Measurement } from "@/lib/measurements";
+import { LatestMeasurements, MeasurementHistory } from "@/components/shared/measurement-views";
+import { MeasurementForm } from "@/components/shared/measurement-form";
 
 interface Student { id: number; name: string; email: string; role: string; createdAt: string; }
-interface Measurement {
-  id: number; date: string; weight: number; chest: number; waist: number;
-  hips: number; leftArm: number; rightArm: number; leftLeg: number; rightLeg: number; abdomen: number; notes: string;
-}
 interface Goal { id: number; title: string; description: string; category: string; targetValue: string; targetDate: string; achieved: boolean; }
 interface Payment { id: number; description: string; amount: number; status: string; method: string; period: string; dueDate: string; paidAt: string; createdAt: string; }
 
@@ -23,17 +22,6 @@ const PAY_METHODS = ["efectivo", "transferencia", "tarjeta", "mercadopago"];
 
 const fmt = (n: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
 
-const FIELDS = [
-  { key: "weight", label: "Peso", unit: "kg" },
-  { key: "chest", label: "Pecho", unit: "cm" },
-  { key: "waist", label: "Cintura", unit: "cm" },
-  { key: "abdomen", label: "Abdomen", unit: "cm" },
-  { key: "hips", label: "Cadera", unit: "cm" },
-  { key: "leftArm", label: "Brazo izq.", unit: "cm" },
-  { key: "rightArm", label: "Brazo der.", unit: "cm" },
-  { key: "leftLeg", label: "Pierna izq.", unit: "cm" },
-  { key: "rightLeg", label: "Pierna der.", unit: "cm" },
-];
 
 const CAT_LABELS: Record<string, string> = { peso: "Peso", fuerza: "Fuerza", medidas: "Medidas", habito: "Habito", otro: "Otro" };
 
@@ -53,6 +41,7 @@ export default function CoachStudentPage() {
   const [payMethod, setPayMethod] = useState("transferencia");
   const [showPayForm, setShowPayForm] = useState(false);
   const [payForm, setPayForm] = useState({ description: "", amount: "", period: "", dueDate: "" });
+  const [showMeasurementForm, setShowMeasurementForm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -82,6 +71,17 @@ export default function CoachStudentPage() {
     setTab(t);
   };
 
+  const reloadMeasurements = async () => {
+    const data = await authFetch(`/coach/students/${id}/measurements`).then((r) => r.json());
+    setMeasurements(data);
+  };
+
+  const deleteMeasurement = async (measurementId: number) => {
+    if (!confirm("¿Borrar esta medición?")) return;
+    await authFetch(`/coach/students/${id}/measurements/${measurementId}`, { method: "DELETE" }).then(ensureOk);
+    reloadMeasurements();
+  };
+
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwMsg(null);
@@ -106,15 +106,6 @@ export default function CoachStudentPage() {
   );
 
   const joined = new Date(student.createdAt).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" });
-  const latest = measurements[0];
-  const previous = measurements[1];
-  const getDiff = (key: string) => {
-    if (!latest || !previous) return null;
-    const a = (latest as any)[key], b = (previous as any)[key];
-    if (!a || !b) return null;
-    return parseFloat(a) - parseFloat(b);
-  };
-
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex flex-wrap items-center gap-4">
@@ -193,55 +184,26 @@ export default function CoachStudentPage() {
       {/* Medidas */}
       {tab === "medidas" && (
         <div className="space-y-4">
+          {showMeasurementForm ? (
+            <MeasurementForm studentId={id}
+              onSaved={() => { setShowMeasurementForm(false); reloadMeasurements(); }}
+              onCancel={() => setShowMeasurementForm(false)} />
+          ) : (
+            <button onClick={() => setShowMeasurementForm(true)}
+              className="flex items-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+              <Plus className="w-4 h-4" /> Nueva medición
+            </button>
+          )}
           {measurements.length === 0 ? (
             <div className="text-center py-16 bg-zinc-900 border border-white/10 rounded-2xl">
               <Ruler className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-400">Sin mediciones registradas todavia.</p>
+              <p className="text-zinc-400">Sin mediciones registradas todavía.</p>
             </div>
           ) : (
             <>
-              {latest && (
-                <div>
-                  <p className="text-zinc-500 text-sm mb-3">
-                    Ultima medicion — {new Date(latest.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {FIELDS.map((f) => {
-                      const val = (latest as any)[f.key];
-                      const diff = getDiff(f.key);
-                      if (!val) return null;
-                      return (
-                        <div key={f.key} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                          <p className="text-xs text-zinc-500 mb-1">{f.label}</p>
-                          <p className="text-xl font-black">{parseFloat(val)}<span className="text-sm font-normal text-zinc-500 ml-1">{f.unit}</span></p>
-                          {diff !== null && (
-                            <div className={`flex items-center gap-1 text-xs mt-1 ${diff < 0 ? "text-green-400" : diff > 0 ? "text-red-400" : "text-zinc-500"}`}>
-                              {diff < 0 ? <TrendingDown className="w-3 h-3" /> : diff > 0 ? <TrendingUp className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                              {diff > 0 ? "+" : ""}{diff.toFixed(1)} {f.unit}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              <div className="space-y-2">
-                <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Historial completo</p>
-                {measurements.map((m) => (
-                  <div key={m.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                    <p className="font-medium text-sm mb-1">{new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}</p>
-                    <div className="flex flex-wrap gap-3">
-                      {FIELDS.map((f) => {
-                        const v = (m as any)[f.key];
-                        if (!v) return null;
-                        return <span key={f.key} className="text-xs text-zinc-400">{f.label}: <span className="text-white">{parseFloat(v)}{f.unit}</span></span>;
-                      })}
-                    </div>
-                    {m.notes && <p className="text-xs text-zinc-500 mt-1">{m.notes}</p>}
-                  </div>
-                ))}
-              </div>
+              <LatestMeasurements measurements={measurements} />
+              <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Historial completo</p>
+              <MeasurementHistory measurements={measurements} onDelete={deleteMeasurement} />
             </>
           )}
         </div>

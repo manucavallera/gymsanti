@@ -2,20 +2,21 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
-import { Measurement } from '../measurements/measurement.entity';
 import { Goal } from '../goals/goal.entity';
 import { Payment } from '../payments/payment.entity';
 import { UsersService } from '../users/users.service';
+import { MeasurementsService } from '../measurements/measurements.service';
+import { CreateMeasurementDto } from '../measurements/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class CoachService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(Measurement) private measurementRepo: Repository<Measurement>,
     @InjectRepository(Goal) private goalRepo: Repository<Goal>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
     private readonly usersService: UsersService,
+    private readonly measurementsService: MeasurementsService,
   ) {}
 
   async getMyStudents(coachId: number) {
@@ -98,10 +99,17 @@ export class CoachService {
 
   async getStudentMeasurements(coachId: number, studentId: number) {
     await this.assertCoachOwnsStudent(coachId, studentId);
-    return this.measurementRepo.find({
-      where: { userId: studentId },
-      order: { date: 'DESC' },
-    });
+    return this.measurementsService.findAll(studentId);
+  }
+
+  async createStudentMeasurement(coachId: number, studentId: number, data: CreateMeasurementDto) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
+    return this.measurementsService.create(studentId, data);
+  }
+
+  async deleteStudentMeasurement(coachId: number, studentId: number, measurementId: number) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
+    await this.measurementsService.delete(studentId, measurementId);
   }
 
   async getStudentGoals(coachId: number, studentId: number) {
