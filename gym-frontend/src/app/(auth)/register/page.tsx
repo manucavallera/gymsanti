@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"user" | "coach">("user");
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [selectedCoachId, setSelectedCoachId] = useState<number | null>(null);
+  const [coachCode, setCoachCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,7 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      await register(email, name, password, role, selectedCoachId ?? undefined);
+      await register(email, name, password, role, selectedCoachId ?? undefined, role === "coach" ? coachCode : undefined);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -108,6 +109,14 @@ export default function RegisterPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {role === "coach" && (
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Código de coach</label>
+                <input type="password" value={coachCode} onChange={(e) => setCoachCode(e.target.value)} required placeholder="Te lo da el administrador"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
               </div>
             )}
 

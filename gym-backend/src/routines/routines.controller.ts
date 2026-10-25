@@ -3,6 +3,7 @@ import {
   Patch, Post, Request, UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CoachGuard } from '../auth/coach.guard';
 import { RoutinesService } from './routines.service';
 
 @Controller('routines')
@@ -46,6 +47,7 @@ export class RoutinesController {
 
   // ── Coach: rutinas ─────────────────────────────────────────────────────────
 
+  @UseGuards(CoachGuard)
   @Get('coach/students/:studentId/all')
   getStudentRoutines(
     @Request() req: any,
@@ -54,6 +56,7 @@ export class RoutinesController {
     return this.svc.getAllStudentRoutinesForCoach(req.user.id, studentId);
   }
 
+  @UseGuards(CoachGuard)
   @Post('coach/students/:studentId')
   createRoutine(
     @Request() req: any,
@@ -63,6 +66,7 @@ export class RoutinesController {
     return this.svc.createRoutine(req.user.id, studentId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Get('coach/:routineId')
   getRoutine(
     @Request() req: any,
@@ -71,6 +75,7 @@ export class RoutinesController {
     return this.svc.getRoutineForCoach(req.user.id, routineId);
   }
 
+  @UseGuards(CoachGuard)
   @Patch('coach/:routineId')
   updateRoutine(
     @Request() req: any,
@@ -80,6 +85,7 @@ export class RoutinesController {
     return this.svc.updateRoutine(req.user.id, routineId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Delete('coach/:routineId')
   deleteRoutine(
     @Request() req: any,
@@ -90,6 +96,7 @@ export class RoutinesController {
 
   // ── Coach: días ────────────────────────────────────────────────────────────
 
+  @UseGuards(CoachGuard)
   @Post('coach/:routineId/days')
   addDay(
     @Request() req: any,
@@ -99,6 +106,7 @@ export class RoutinesController {
     return this.svc.addDay(req.user.id, routineId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Patch('coach/days/:dayId')
   updateDay(
     @Request() req: any,
@@ -108,6 +116,7 @@ export class RoutinesController {
     return this.svc.updateDay(req.user.id, dayId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Delete('coach/days/:dayId')
   deleteDay(
     @Request() req: any,
@@ -118,6 +127,7 @@ export class RoutinesController {
 
   // ── Coach: ejercicios ──────────────────────────────────────────────────────
 
+  @UseGuards(CoachGuard)
   @Post('coach/days/:dayId/exercises')
   addExercise(
     @Request() req: any,
@@ -127,6 +137,7 @@ export class RoutinesController {
     return this.svc.addExercise(req.user.id, dayId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Patch('coach/exercises/:exerciseId')
   updateExercise(
     @Request() req: any,
@@ -136,6 +147,7 @@ export class RoutinesController {
     return this.svc.updateExercise(req.user.id, exerciseId, body);
   }
 
+  @UseGuards(CoachGuard)
   @Delete('coach/exercises/:exerciseId')
   deleteExercise(
     @Request() req: any,

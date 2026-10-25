@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { UtensilsCrossed, Plus, Trash2, ArrowLeft, Save, Edit2, ChevronDown, ChevronUp, Check, X, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
-import { authFetch } from "@/lib/api";
+import { authFetch, ensureOk } from "@/lib/api";
 
 interface Meal { id: number; name: string; time: string; calories: number; protein: number; carbs: number; fats: number; foods: string; order: number; }
 interface MealDay { id: number; name: string; order: number; meals: Meal[]; }
@@ -23,6 +23,18 @@ export default function CoachStudentNutritionPage() {
   const [newMeal, setNewMeal] = useState<Record<number, typeof emptyMeal>>({});
   const [editMeal, setEditMeal] = useState<Record<number, typeof emptyMeal & { open: boolean }>>({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  // Wraps write handlers: on API failure keep the UI as is and show why.
+  const run = <A extends unknown[]>(fn: (...args: A) => Promise<void>) => async (...args: A) => {
+    setSaveError("");
+    try {
+      await fn(...args);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "No se pudo guardar");
+      setSaving(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -50,7 +62,7 @@ export default function CoachStudentNutritionPage() {
     setLoading(false);
   };
 
-  const createPlan = async () => {
+  const createPlan = run(async () => {
     if (!newPlan.name) return;
     const r = await authFetch(`/nutrition/coach/students/${studentId}`, {
       method: "POST",
@@ -61,31 +73,31 @@ export default function CoachStudentNutritionPage() {
         dailyCarbs: newPlan.dailyCarbs ? parseInt(newPlan.dailyCarbs) : undefined,
         dailyFats: newPlan.dailyFats ? parseInt(newPlan.dailyFats) : undefined,
       }),
-    });
+    }).then(ensureOk);
     const created = await r.json();
     setAllPlans((p) => [...p, { ...created, days: [] }]);
     setPlan({ ...created, days: [] });
     setCreating(false);
     setNewPlan({ name: "", description: "", dailyCalories: "", dailyProtein: "", dailyCarbs: "", dailyFats: "" });
-  };
+  });
 
-  const addDay = async () => {
+  const addDay = run(async () => {
     if (!newDay.trim() || !plan) return;
     const r = await authFetch(`/nutrition/coach/${plan.id}/days`, {
       method: "POST", body: JSON.stringify({ name: newDay, order: plan.days.length }),
-    });
+    }).then(ensureOk);
     const day = await r.json();
     setPlan((p) => p ? { ...p, days: [...p.days, { ...day, meals: [] }] } : p);
     setNewDay("");
     setOpenDay(day.id);
-  };
+  });
 
-  const deleteDay = async (dayId: number) => {
-    await authFetch(`/nutrition/coach/days/${dayId}`, { method: "DELETE" });
+  const deleteDay = run(async (dayId: number) => {
+    await authFetch(`/nutrition/coach/days/${dayId}`, { method: "DELETE" }).then(ensureOk);
     setPlan((p) => p ? { ...p, days: p.days.filter((d) => d.id !== dayId) } : p);
-  };
+  });
 
-  const reorderDay = async (dayId: number, dir: "up" | "down") => {
+  const reorderDay = run(async (dayId: number, dir: "up" | "down") => {
     if (!plan) return;
     const sorted = [...plan.days].sort((a, b) => a.order - b.order);
     const idx = sorted.findIndex((d) => d.id === dayId);
@@ -93,17 +105,17 @@ export default function CoachStudentNutritionPage() {
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const a = sorted[idx], b = sorted[swapIdx];
     await Promise.all([
-      authFetch(`/nutrition/coach/days/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }),
-      authFetch(`/nutrition/coach/days/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }),
+      authFetch(`/nutrition/coach/days/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }).then(ensureOk),
+      authFetch(`/nutrition/coach/days/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }).then(ensureOk),
     ]);
     setPlan((p) => p ? {
       ...p, days: p.days.map((d) =>
         d.id === a.id ? { ...d, order: b.order } :
         d.id === b.id ? { ...d, order: a.order } : d),
     } : p);
-  };
+  });
 
-  const addMeal = async (dayId: number) => {
+  const addMeal = run(async (dayId: number) => {
     const m = newMeal[dayId];
     if (!m?.name) return;
     setSaving(true);
@@ -117,16 +129,16 @@ export default function CoachStudentNutritionPage() {
         carbs: m.carbs ? parseInt(m.carbs) : undefined,
         fats: m.fats ? parseInt(m.fats) : undefined,
       }),
-    });
+    }).then(ensureOk);
     const created = await r.json();
     setPlan((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? { ...d, meals: [...d.meals, created] } : d),
     } : p);
     setNewMeal((p) => ({ ...p, [dayId]: emptyMeal }));
     setSaving(false);
-  };
+  });
 
-  const reorderMeal = async (dayId: number, mealId: number, dir: "up" | "down") => {
+  const reorderMeal = run(async (dayId: number, mealId: number, dir: "up" | "down") => {
     if (!plan) return;
     const day = plan.days.find((d) => d.id === dayId);
     if (!day) return;
@@ -136,8 +148,8 @@ export default function CoachStudentNutritionPage() {
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const a = sorted[idx], b = sorted[swapIdx];
     await Promise.all([
-      authFetch(`/nutrition/coach/meals/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }),
-      authFetch(`/nutrition/coach/meals/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }),
+      authFetch(`/nutrition/coach/meals/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }).then(ensureOk),
+      authFetch(`/nutrition/coach/meals/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }).then(ensureOk),
     ]);
     setPlan((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? {
@@ -146,9 +158,9 @@ export default function CoachStudentNutritionPage() {
           m.id === b.id ? { ...m, order: a.order } : m),
       } : d),
     } : p);
-  };
+  });
 
-  const saveEditMeal = async (dayId: number, mealId: number) => {
+  const saveEditMeal = run(async (dayId: number, mealId: number) => {
     const m = editMeal[mealId];
     if (!m?.name) return;
     setSaving(true);
@@ -161,7 +173,7 @@ export default function CoachStudentNutritionPage() {
         carbs: m.carbs ? parseInt(m.carbs) : undefined,
         fats: m.fats ? parseInt(m.fats) : undefined,
       }),
-    });
+    }).then(ensureOk);
     setPlan((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? {
         ...d, meals: d.meals.map((ml) => ml.id === mealId
@@ -175,14 +187,14 @@ export default function CoachStudentNutritionPage() {
     } : p);
     setEditMeal((p) => ({ ...p, [mealId]: { ...p[mealId], open: false } }));
     setSaving(false);
-  };
+  });
 
-  const deleteMeal = async (dayId: number, mealId: number) => {
-    await authFetch(`/nutrition/coach/meals/${mealId}`, { method: "DELETE" });
+  const deleteMeal = run(async (dayId: number, mealId: number) => {
+    await authFetch(`/nutrition/coach/meals/${mealId}`, { method: "DELETE" }).then(ensureOk);
     setPlan((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? { ...d, meals: d.meals.filter((m) => m.id !== mealId) } : d),
     } : p);
-  };
+  });
 
   const openEdit = (meal: Meal) => {
     setEditMeal((p) => ({
@@ -204,6 +216,12 @@ export default function CoachStudentNutritionPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {saveError && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg flex items-start justify-between gap-3">
+          <span>No se guardó: {saveError}</span>
+          <button onClick={() => setSaveError("")} className="text-red-300 hover:text-white">Cerrar</button>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <Link href={`/coach/students/${studentId}`}
           className="p-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-colors">

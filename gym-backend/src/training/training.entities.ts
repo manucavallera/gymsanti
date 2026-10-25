@@ -1,3 +1,4 @@
+import { decimalTransformer } from '../common/decimal.transformer';
 import {
   Entity, PrimaryGeneratedColumn, Column, ManyToOne,
   OneToMany, CreateDateColumn, JoinColumn,
@@ -44,7 +45,7 @@ export class Exercise {
 @Entity('exercise_logs')
 export class ExerciseLog {
   @PrimaryGeneratedColumn() id: number;
-  @Column('decimal', { precision: 6, scale: 2 }) weight: number;
+  @Column('decimal', { precision: 6, scale: 2, transformer: decimalTransformer }) weight: number;
   @Column({ nullable: true }) repsActual: string;
   @Column({ nullable: true }) notes: string;
   @CreateDateColumn() date: Date;

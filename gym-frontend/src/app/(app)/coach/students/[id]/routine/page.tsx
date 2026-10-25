@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Dumbbell, Plus, Trash2, ArrowLeft, Save, Edit2, ChevronDown, ChevronUp, Check, X, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
-import { authFetch } from "@/lib/api";
+import { authFetch, ensureOk } from "@/lib/api";
 
 interface RoutineExercise { id: number; name: string; sets: number; reps: string; weight: string; notes: string; order: number; }
 interface RoutineDay { id: number; name: string; order: number; exercises: RoutineExercise[]; }
@@ -23,6 +23,18 @@ export default function CoachStudentRoutinePage() {
   const [newEx, setNewEx] = useState<Record<number, typeof emptyEx>>({});
   const [editEx, setEditEx] = useState<Record<number, typeof emptyEx & { open: boolean }>>({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  // Wraps write handlers: on API failure keep the UI as is and show why.
+  const run = <A extends unknown[]>(fn: (...args: A) => Promise<void>) => async (...args: A) => {
+    setSaveError("");
+    try {
+      await fn(...args);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "No se pudo guardar");
+      setSaving(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -50,35 +62,35 @@ export default function CoachStudentRoutinePage() {
     setLoading(false);
   };
 
-  const createRoutine = async () => {
+  const createRoutine = run(async () => {
     if (!newRoutine.name) return;
     const r = await authFetch(`/routines/coach/students/${studentId}`, {
       method: "POST", body: JSON.stringify(newRoutine),
-    });
+    }).then(ensureOk);
     const created = await r.json();
     setAllRoutines((p) => [...p, { ...created, days: [] }]);
     setRoutine({ ...created, days: [] });
     setCreating(false);
     setNewRoutine({ name: "", description: "" });
-  };
+  });
 
-  const addDay = async () => {
+  const addDay = run(async () => {
     if (!newDay.trim() || !routine) return;
     const r = await authFetch(`/routines/coach/${routine.id}/days`, {
       method: "POST", body: JSON.stringify({ name: newDay, order: routine.days.length }),
-    });
+    }).then(ensureOk);
     const day = await r.json();
     setRoutine((p) => p ? { ...p, days: [...p.days, { ...day, exercises: [] }] } : p);
     setNewDay("");
     setOpenDay(day.id);
-  };
+  });
 
-  const deleteDay = async (dayId: number) => {
-    await authFetch(`/routines/coach/days/${dayId}`, { method: "DELETE" });
+  const deleteDay = run(async (dayId: number) => {
+    await authFetch(`/routines/coach/days/${dayId}`, { method: "DELETE" }).then(ensureOk);
     setRoutine((p) => p ? { ...p, days: p.days.filter((d) => d.id !== dayId) } : p);
-  };
+  });
 
-  const reorderDay = async (dayId: number, dir: "up" | "down") => {
+  const reorderDay = run(async (dayId: number, dir: "up" | "down") => {
     if (!routine) return;
     const sorted = [...routine.days].sort((a, b) => a.order - b.order);
     const idx = sorted.findIndex((d) => d.id === dayId);
@@ -86,17 +98,17 @@ export default function CoachStudentRoutinePage() {
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const a = sorted[idx], b = sorted[swapIdx];
     await Promise.all([
-      authFetch(`/routines/coach/days/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }),
-      authFetch(`/routines/coach/days/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }),
+      authFetch(`/routines/coach/days/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }).then(ensureOk),
+      authFetch(`/routines/coach/days/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }).then(ensureOk),
     ]);
     setRoutine((p) => p ? {
       ...p, days: p.days.map((d) =>
         d.id === a.id ? { ...d, order: b.order } :
         d.id === b.id ? { ...d, order: a.order } : d),
     } : p);
-  };
+  });
 
-  const addExercise = async (dayId: number) => {
+  const addExercise = run(async (dayId: number) => {
     const ex = newEx[dayId];
     if (!ex?.name || !ex.sets || !ex.reps) return;
     setSaving(true);
@@ -104,16 +116,16 @@ export default function CoachStudentRoutinePage() {
     const r = await authFetch(`/routines/coach/days/${dayId}/exercises`, {
       method: "POST",
       body: JSON.stringify({ name: ex.name, sets: parseInt(ex.sets), reps: ex.reps, weight: ex.weight, notes: ex.notes, order: day?.exercises.length ?? 0 }),
-    });
+    }).then(ensureOk);
     const created = await r.json();
     setRoutine((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? { ...d, exercises: [...d.exercises, created] } : d),
     } : p);
     setNewEx((p) => ({ ...p, [dayId]: emptyEx }));
     setSaving(false);
-  };
+  });
 
-  const reorderExercise = async (dayId: number, exId: number, dir: "up" | "down") => {
+  const reorderExercise = run(async (dayId: number, exId: number, dir: "up" | "down") => {
     if (!routine) return;
     const day = routine.days.find((d) => d.id === dayId);
     if (!day) return;
@@ -123,8 +135,8 @@ export default function CoachStudentRoutinePage() {
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
     const a = sorted[idx], b = sorted[swapIdx];
     await Promise.all([
-      authFetch(`/routines/coach/exercises/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }),
-      authFetch(`/routines/coach/exercises/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }),
+      authFetch(`/routines/coach/exercises/${a.id}`, { method: "PATCH", body: JSON.stringify({ order: b.order }) }).then(ensureOk),
+      authFetch(`/routines/coach/exercises/${b.id}`, { method: "PATCH", body: JSON.stringify({ order: a.order }) }).then(ensureOk),
     ]);
     setRoutine((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? {
@@ -133,16 +145,16 @@ export default function CoachStudentRoutinePage() {
           e.id === b.id ? { ...e, order: a.order } : e),
       } : d),
     } : p);
-  };
+  });
 
-  const saveEditEx = async (dayId: number, exId: number) => {
+  const saveEditEx = run(async (dayId: number, exId: number) => {
     const ex = editEx[exId];
     if (!ex?.name || !ex.sets || !ex.reps) return;
     setSaving(true);
     await authFetch(`/routines/coach/exercises/${exId}`, {
       method: "PATCH",
       body: JSON.stringify({ name: ex.name, sets: parseInt(ex.sets), reps: ex.reps, weight: ex.weight, notes: ex.notes }),
-    });
+    }).then(ensureOk);
     setRoutine((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? {
         ...d, exercises: d.exercises.map((e) => e.id === exId
@@ -152,14 +164,14 @@ export default function CoachStudentRoutinePage() {
     } : p);
     setEditEx((p) => ({ ...p, [exId]: { ...p[exId], open: false } }));
     setSaving(false);
-  };
+  });
 
-  const deleteExercise = async (dayId: number, exId: number) => {
-    await authFetch(`/routines/coach/exercises/${exId}`, { method: "DELETE" });
+  const deleteExercise = run(async (dayId: number, exId: number) => {
+    await authFetch(`/routines/coach/exercises/${exId}`, { method: "DELETE" }).then(ensureOk);
     setRoutine((p) => p ? {
       ...p, days: p.days.map((d) => d.id === dayId ? { ...d, exercises: d.exercises.filter((e) => e.id !== exId) } : d),
     } : p);
-  };
+  });
 
   const openEdit = (ex: RoutineExercise) => {
     setEditEx((p) => ({
@@ -174,6 +186,12 @@ export default function CoachStudentRoutinePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {saveError && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg flex items-start justify-between gap-3">
+          <span>No se guardó: {saveError}</span>
+          <button onClick={() => setSaveError("")} className="text-red-300 hover:text-white">Cerrar</button>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <Link href={`/coach/students/${studentId}`}
           className="p-2 rounded-lg bg-zinc-900 border border-white/10 hover:border-white/20 text-zinc-400 hover:text-white transition-colors">

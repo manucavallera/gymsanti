@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from '../users/user.entity';
 import { MealPlan, MealDay, Meal } from './nutrition.entities';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class NutritionService {
     @InjectRepository(MealPlan) private planRepo: Repository<MealPlan>,
     @InjectRepository(MealDay) private dayRepo: Repository<MealDay>,
     @InjectRepository(Meal) private mealRepo: Repository<Meal>,
+    @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
   // ── Coach ──────────────────────────────────────────────────────────────────
@@ -17,6 +19,7 @@ export class NutritionService {
     name: string; description?: string;
     dailyCalories?: number; dailyProtein?: number; dailyCarbs?: number; dailyFats?: number;
   }) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
     const plan = this.planRepo.create({ ...data, coachId, studentId });
     return this.planRepo.save(plan);
   }
@@ -101,7 +104,7 @@ export class NutritionService {
     const plan = await this.planRepo.findOne({
       where: { studentId },
       relations: ['days', 'days.meals'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
     if (!plan) return null;
     plan.days.sort((a, b) => a.order - b.order);
@@ -110,9 +113,10 @@ export class NutritionService {
   }
 
   async getAllStudentPlansForCoach(coachId: number, studentId: number) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
     return this.planRepo.find({
       where: { studentId, coachId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
   }
 
@@ -120,5 +124,10 @@ export class NutritionService {
     const plan = await this.planRepo.findOne({ where: { id: planId, coachId } });
     if (!plan) throw new ForbiddenException();
     return plan;
+  }
+
+  private async assertCoachOwnsStudent(coachId: number, studentId: number) {
+    const student = await this.userRepo.findOne({ where: { id: studentId, coachId } });
+    if (!student) throw new ForbiddenException('No tenes acceso a este alumno');
   }
 }

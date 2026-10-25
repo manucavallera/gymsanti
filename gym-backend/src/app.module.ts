@@ -26,8 +26,10 @@ import { StockMovement } from './products/stock-movement.entity';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: 'gymcore.db',
+      // DATABASE_URL set (production) = Postgres. Otherwise a local SQLite file (dev and tests).
+      ...(process.env.DATABASE_URL
+        ? { type: 'postgres' as const, url: process.env.DATABASE_URL }
+        : { type: 'better-sqlite3' as const, database: process.env.DB_PATH || 'gymcore.db' }),
       entities: [
         User, Product,
         TrainingType, TrainingStage, Exercise, ExerciseLog,

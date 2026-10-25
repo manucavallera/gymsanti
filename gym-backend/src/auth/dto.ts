@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Email inválido' })
@@ -17,7 +17,13 @@ export class RegisterDto {
   role?: 'user' | 'coach';
 
   @IsOptional()
+  @IsInt()
   coachId?: number;
+
+  // Required when role is 'coach'. Must match SETUP_SECRET.
+  @IsOptional()
+  @IsString()
+  coachCode?: string;
 }
 
 export class LoginDto {

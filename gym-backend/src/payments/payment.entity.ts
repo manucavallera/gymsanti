@@ -1,3 +1,4 @@
+import { decimalTransformer } from '../common/decimal.transformer';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { User } from '../users/user.entity';
 
@@ -8,7 +9,7 @@ export type PaymentMethod = 'efectivo' | 'transferencia' | 'tarjeta' | 'mercadop
 export class Payment {
   @PrimaryGeneratedColumn() id: number;
   @Column() description: string;
-  @Column('decimal', { precision: 10, scale: 2 }) amount: number;
+  @Column('decimal', { precision: 10, scale: 2, transformer: decimalTransformer }) amount: number;
   @Column({ default: 'pendiente' }) status: PaymentStatus;
   @Column({ nullable: true }) method: PaymentMethod;
   @Column({ nullable: true }) period: string;

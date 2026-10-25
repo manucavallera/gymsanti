@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
@@ -36,8 +36,16 @@ export class CoachService {
     if (coachId === studentId) throw new ForbiddenException();
     const student = await this.userRepo.findOne({ where: { id: studentId } });
     if (!student) throw new NotFoundException('Usuario no encontrado');
+    if (student.role !== 'user') throw new BadRequestException('Solo se pueden asignar alumnos');
+    if (student.coachId && student.coachId !== coachId) throw new ConflictException('El alumno ya tiene otro coach');
     student.coachId = coachId;
-    return this.userRepo.save(student);
+    const saved = await this.userRepo.save(student);
+    return { id: saved.id, email: saved.email, name: saved.name, role: saved.role, coachId: saved.coachId };
+  }
+
+  private async assertCoachOwnsStudent(coachId: number, studentId: number) {
+    const student = await this.userRepo.findOne({ where: { id: studentId, coachId } });
+    if (!student) throw new ForbiddenException('No tenes acceso a este alumno');
   }
 
   async removeStudent(coachId: number, studentId: number) {
@@ -111,10 +119,5 @@ export class CoachService {
   async deleteStudentPayment(coachId: number, studentId: number, paymentId: number) {
     await this.assertCoachOwnsStudent(coachId, studentId);
     await this.paymentRepo.delete({ id: paymentId, userId: studentId });
-  }
-
-  private async assertCoachOwnsStudent(coachId: number, studentId: number) {
-    const student = await this.userRepo.findOne({ where: { id: studentId, coachId } });
-    if (!student) throw new ForbiddenException('No tenes acceso a este alumno');
   }
 }

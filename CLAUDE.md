@@ -69,7 +69,11 @@ gymsanti/
 ```
 
 ## DB
-SQLite — `gym-backend/gymcore.db` (se crea solo). `synchronize: true`.
+- **Produccion:** Postgres. Se activa con la variable `DATABASE_URL` (ej. `postgres://user:pass@host:5432/gymcore`).
+- **Local y tests:** si no hay `DATABASE_URL`, usa SQLite en `gym-backend/gymcore.db` (o `DB_PATH`). Se crea solo.
+- `synchronize: true` en ambos: las tablas se crean solas.
+- Columnas `decimal` usan `decimalTransformer` (`src/common/decimal.transformer.ts`) para que Postgres devuelva numeros y no strings.
+- Alta de coach en `/auth/register` requiere `coachCode` igual a `SETUP_SECRET`. Sin `SETUP_SECRET`, alta de coach deshabilitada.
 
 Seed automatico al primer arranque: 12 productos, 4 tipos de entrenamiento, 4 protocolos.
 

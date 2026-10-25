@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from '../users/user.entity';
 import { Routine, RoutineDay, RoutineExercise, RoutineExerciseLog } from './routine.entities';
 
 @Injectable()
@@ -10,11 +11,13 @@ export class RoutinesService {
     @InjectRepository(RoutineDay) private dayRepo: Repository<RoutineDay>,
     @InjectRepository(RoutineExercise) private exerciseRepo: Repository<RoutineExercise>,
     @InjectRepository(RoutineExerciseLog) private logRepo: Repository<RoutineExerciseLog>,
+    @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
   // ── Coach: gestión de rutinas ──────────────────────────────────────────────
 
   async createRoutine(coachId: number, studentId: number, data: { name: string; description?: string }) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
     const r = this.routineRepo.create({ ...data, coachId, studentId });
     return this.routineRepo.save(r);
   }
@@ -94,7 +97,7 @@ export class RoutinesService {
     const routine = await this.routineRepo.findOne({
       where: { studentId },
       relations: ['days', 'days.exercises', 'days.exercises.logs'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
     if (!routine) return null;
     routine.days.sort((a, b) => a.order - b.order);
@@ -106,15 +109,16 @@ export class RoutinesService {
     return this.routineRepo.find({
       where: { studentId },
       relations: ['days'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
   }
 
   async getAllStudentRoutinesForCoach(coachId: number, studentId: number) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
     return this.routineRepo.find({
       where: { studentId, coachId },
       relations: ['days'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
   }
 
@@ -139,7 +143,7 @@ export class RoutinesService {
     const routine = await this.routineRepo.findOne({
       where: { studentId },
       relations: ['days', 'days.exercises'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC', id: 'DESC' },
     });
     if (!routine) return [];
 
@@ -170,5 +174,10 @@ export class RoutinesService {
     const r = await this.routineRepo.findOne({ where: { id: routineId, coachId } });
     if (!r) throw new ForbiddenException();
     return r;
+  }
+
+  private async assertCoachOwnsStudent(coachId: number, studentId: number) {
+    const student = await this.userRepo.findOne({ where: { id: studentId, coachId } });
+    if (!student) throw new ForbiddenException('No tenes acceso a este alumno');
   }
 }

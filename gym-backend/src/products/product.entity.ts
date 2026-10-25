@@ -1,3 +1,4 @@
+import { decimalTransformer } from '../common/decimal.transformer';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 export type ProductCategory = 'suplementos' | 'vitaminas' | 'dulces';
@@ -13,7 +14,7 @@ export class Product {
   @Column('text')
   description: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, transformer: decimalTransformer })
   price: number;
 
   @Column()
