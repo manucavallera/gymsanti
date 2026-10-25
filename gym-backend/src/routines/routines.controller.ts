@@ -5,6 +5,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoachGuard } from '../auth/coach.guard';
 import { RoutinesService } from './routines.service';
+import { CreateExerciseDto, CreateRoutineDayDto, CreateRoutineDto, LogExerciseDto, UpdateExerciseDto, UpdateRoutineDayDto, UpdateRoutineDto } from './dto';
 
 @Controller('routines')
 @UseGuards(JwtAuthGuard)
@@ -32,7 +33,7 @@ export class RoutinesController {
   logExercise(
     @Request() req: any,
     @Param('exerciseId', ParseIntPipe) exerciseId: number,
-    @Body() body: { weight: number; repsActual?: string; notes?: string },
+    @Body() body: LogExerciseDto,
   ) {
     return this.svc.logExercise(req.user.id, exerciseId, body);
   }
@@ -61,7 +62,7 @@ export class RoutinesController {
   createRoutine(
     @Request() req: any,
     @Param('studentId', ParseIntPipe) studentId: number,
-    @Body() body: { name: string; description?: string },
+    @Body() body: CreateRoutineDto,
   ) {
     return this.svc.createRoutine(req.user.id, studentId, body);
   }
@@ -80,7 +81,7 @@ export class RoutinesController {
   updateRoutine(
     @Request() req: any,
     @Param('routineId', ParseIntPipe) routineId: number,
-    @Body() body: { name?: string; description?: string },
+    @Body() body: UpdateRoutineDto,
   ) {
     return this.svc.updateRoutine(req.user.id, routineId, body);
   }
@@ -101,7 +102,7 @@ export class RoutinesController {
   addDay(
     @Request() req: any,
     @Param('routineId', ParseIntPipe) routineId: number,
-    @Body() body: { name: string; order?: number },
+    @Body() body: CreateRoutineDayDto,
   ) {
     return this.svc.addDay(req.user.id, routineId, body);
   }
@@ -111,7 +112,7 @@ export class RoutinesController {
   updateDay(
     @Request() req: any,
     @Param('dayId', ParseIntPipe) dayId: number,
-    @Body() body: { name?: string; order?: number },
+    @Body() body: UpdateRoutineDayDto,
   ) {
     return this.svc.updateDay(req.user.id, dayId, body);
   }
@@ -132,7 +133,7 @@ export class RoutinesController {
   addExercise(
     @Request() req: any,
     @Param('dayId', ParseIntPipe) dayId: number,
-    @Body() body: { name: string; sets: number; reps: string; weight?: string; notes?: string; order?: number },
+    @Body() body: CreateExerciseDto,
   ) {
     return this.svc.addExercise(req.user.id, dayId, body);
   }
@@ -142,7 +143,7 @@ export class RoutinesController {
   updateExercise(
     @Request() req: any,
     @Param('exerciseId', ParseIntPipe) exerciseId: number,
-    @Body() body: { name?: string; sets?: number; reps?: string; weight?: string; notes?: string; order?: number },
+    @Body() body: UpdateExerciseDto,
   ) {
     return this.svc.updateExercise(req.user.id, exerciseId, body);
   }

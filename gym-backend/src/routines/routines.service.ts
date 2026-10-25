@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Routine, RoutineDay, RoutineExercise, RoutineExerciseLog } from './routine.entities';
+import { CreateExerciseDto, CreateRoutineDayDto, CreateRoutineDto, LogExerciseDto, UpdateExerciseDto, UpdateRoutineDayDto, UpdateRoutineDto } from './dto';
 
 @Injectable()
 export class RoutinesService {
@@ -16,13 +17,13 @@ export class RoutinesService {
 
   // ── Coach: gestión de rutinas ──────────────────────────────────────────────
 
-  async createRoutine(coachId: number, studentId: number, data: { name: string; description?: string }) {
+  async createRoutine(coachId: number, studentId: number, data: CreateRoutineDto) {
     await this.assertCoachOwnsStudent(coachId, studentId);
     const r = this.routineRepo.create({ ...data, coachId, studentId });
     return this.routineRepo.save(r);
   }
 
-  async updateRoutine(coachId: number, routineId: number, data: { name?: string; description?: string }) {
+  async updateRoutine(coachId: number, routineId: number, data: UpdateRoutineDto) {
     const r = await this.routineRepo.findOne({ where: { id: routineId, coachId } });
     if (!r) throw new NotFoundException();
     Object.assign(r, data);
@@ -46,13 +47,13 @@ export class RoutinesService {
 
   // ── Días ──────────────────────────────────────────────────────────────────
 
-  async addDay(coachId: number, routineId: number, data: { name: string; order?: number }) {
+  async addDay(coachId: number, routineId: number, data: CreateRoutineDayDto) {
     await this.assertCoachOwnsRoutine(coachId, routineId);
     const d = this.dayRepo.create({ ...data, routineId });
     return this.dayRepo.save(d);
   }
 
-  async updateDay(coachId: number, dayId: number, data: { name?: string; order?: number }) {
+  async updateDay(coachId: number, dayId: number, data: UpdateRoutineDayDto) {
     const day = await this.dayRepo.findOne({ where: { id: dayId }, relations: ['routine'] });
     if (!day || day.routine.coachId !== coachId) throw new ForbiddenException();
     Object.assign(day, data);
@@ -67,18 +68,14 @@ export class RoutinesService {
 
   // ── Ejercicios ─────────────────────────────────────────────────────────────
 
-  async addExercise(coachId: number, dayId: number, data: {
-    name: string; sets: number; reps: string; weight?: string; notes?: string; order?: number;
-  }) {
+  async addExercise(coachId: number, dayId: number, data: CreateExerciseDto) {
     const day = await this.dayRepo.findOne({ where: { id: dayId }, relations: ['routine'] });
     if (!day || day.routine.coachId !== coachId) throw new ForbiddenException();
     const ex = this.exerciseRepo.create({ ...data, dayId });
     return this.exerciseRepo.save(ex);
   }
 
-  async updateExercise(coachId: number, exerciseId: number, data: {
-    name?: string; sets?: number; reps?: string; weight?: string; notes?: string; order?: number;
-  }) {
+  async updateExercise(coachId: number, exerciseId: number, data: UpdateExerciseDto) {
     const ex = await this.exerciseRepo.findOne({ where: { id: exerciseId }, relations: ['day', 'day.routine'] });
     if (!ex || ex.day.routine.coachId !== coachId) throw new ForbiddenException();
     Object.assign(ex, data);
@@ -124,9 +121,10 @@ export class RoutinesService {
 
   // ── Logs de progreso ──────────────────────────────────────────────────────
 
-  async logExercise(userId: number, exerciseId: number, data: {
-    weight: number; repsActual?: string; notes?: string;
-  }) {
+  async logExercise(userId: number, exerciseId: number, data: LogExerciseDto) {
+    // Only exercises from the student's own routines can be logged.
+    const ex = await this.exerciseRepo.findOne({ where: { id: exerciseId }, relations: ['day', 'day.routine'] });
+    if (!ex || ex.day.routine.studentId !== userId) throw new NotFoundException('Ejercicio no encontrado');
     const log = this.logRepo.create({ ...data, exerciseId, userId });
     return this.logRepo.save(log);
   }

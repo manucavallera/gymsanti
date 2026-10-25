@@ -285,4 +285,42 @@ describe('Permissions (e2e)', () => {
         .send({ name: 'Desayuno', time: '08:00', calories: 450, protein: 30, carbs: 50, fats: 12, foods: 'Avena' }).expect(201);
     });
   });
+
+  describe('routine edits and logs', () => {
+    const setup = async () => {
+      const coach = await signupCoach();
+      const s1 = await createStudent(coach);
+      const s2 = await createStudent(coach);
+      const auth = { Authorization: `Bearer ${coach}` };
+      const routine = await request(http).post(`/routines/coach/students/${s1.id}`).set(auth).send({ name: 'Fuerza' }).expect(201);
+      const day = await request(http).post(`/routines/coach/${routine.body.id}/days`).set(auth).send({ name: 'Dia 1' }).expect(201);
+      const ex = await request(http).post(`/routines/coach/days/${day.body.id}/exercises`).set(auth)
+        .send({ name: 'Sentadilla', sets: 4, reps: '8' }).expect(201);
+      return { coach, auth, s1, s2, routine: routine.body, ex: ex.body };
+    };
+
+    it('PATCH cannot move a routine to another student', async () => {
+      const { auth, s1, s2, routine } = await setup();
+      await request(http).patch(`/routines/coach/${routine.id}`).set(auth).send({ name: 'Fuerza B', studentId: s2.id }).expect(200);
+      const mine = await request(http).get('/routines/my').set('Authorization', `Bearer ${s1.token}`).expect(200);
+      expect(mine.body.name).toBe('Fuerza B');
+      const other = await request(http).get('/routines/my').set('Authorization', `Bearer ${s2.token}`).expect(200);
+      expect(other.body).toEqual({});
+    });
+
+    it('student logs only own exercises and cannot overwrite other logs', async () => {
+      const { s1, s2, ex } = await setup();
+      const log = await request(http).post(`/routines/exercises/${ex.id}/log`).set('Authorization', `Bearer ${s1.token}`).send({ weight: 100 }).expect(201);
+      await request(http).post(`/routines/exercises/${ex.id}/log`).set('Authorization', `Bearer ${s2.token}`).send({ weight: 5 }).expect(404);
+      await request(http).post(`/routines/exercises/${ex.id}/log`).set('Authorization', `Bearer ${s1.token}`).send({ id: log.body.id, weight: 1 }).expect(201);
+      const logs = await request(http).get(`/routines/exercises/${ex.id}/logs`).set('Authorization', `Bearer ${s1.token}`).expect(200);
+      expect(logs.body.map((l: { weight: number }) => l.weight).sort()).toEqual([1, 100]);
+    });
+
+    it('validates exercise input', async () => {
+      const { auth, routine } = await setup();
+      const day = await request(http).post(`/routines/coach/${routine.id}/days`).set(auth).send({ name: 'Dia 2' }).expect(201);
+      await request(http).post(`/routines/coach/days/${day.body.id}/exercises`).set(auth).send({ name: 'Press', sets: 'cuatro', reps: '10' }).expect(400);
+    });
+  });
 });
