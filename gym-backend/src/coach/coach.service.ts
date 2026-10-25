@@ -2,22 +2,23 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException,
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/user.entity';
-import { Goal } from '../goals/goal.entity';
 import { Payment } from '../payments/payment.entity';
 import { UsersService } from '../users/users.service';
 import { MeasurementsService } from '../measurements/measurements.service';
 import { CreateMeasurementDto } from '../measurements/dto';
 import { CreateStudentPaymentDto } from '../payments/dto';
+import { GoalsService } from '../goals/goals.service';
+import { CreateGoalDto } from '../goals/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class CoachService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(Goal) private goalRepo: Repository<Goal>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
     private readonly usersService: UsersService,
     private readonly measurementsService: MeasurementsService,
+    private readonly goalsService: GoalsService,
   ) {}
 
   async getMyStudents(coachId: number) {
@@ -115,10 +116,22 @@ export class CoachService {
 
   async getStudentGoals(coachId: number, studentId: number) {
     await this.assertCoachOwnsStudent(coachId, studentId);
-    return this.goalRepo.find({
-      where: { userId: studentId },
-      order: { createdAt: 'DESC' },
-    });
+    return this.goalsService.findAll(studentId);
+  }
+
+  async createStudentGoal(coachId: number, studentId: number, data: CreateGoalDto) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
+    return this.goalsService.create(studentId, data);
+  }
+
+  async toggleStudentGoal(coachId: number, studentId: number, goalId: number) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
+    return this.goalsService.toggleAchieved(studentId, goalId);
+  }
+
+  async deleteStudentGoal(coachId: number, studentId: number, goalId: number) {
+    await this.assertCoachOwnsStudent(coachId, studentId);
+    await this.goalsService.delete(studentId, goalId);
   }
 
   async getStudentPayments(coachId: number, studentId: number) {

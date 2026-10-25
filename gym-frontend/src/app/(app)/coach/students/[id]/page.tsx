@@ -1,18 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, CheckCircle2, Plus, KeyRound } from "lucide-react";
+import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Plus, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { authFetch, ensureOk } from "@/lib/api";
 import { Measurement } from "@/lib/measurements";
 import { LatestMeasurements, MeasurementHistory } from "@/components/shared/measurement-views";
 import { MeasurementForm } from "@/components/shared/measurement-form";
 import { CoachPayments } from "@/components/shared/coach-payments";
+import { CoachGoals } from "@/components/shared/coach-goals";
 
 interface Student { id: number; name: string; email: string; role: string; createdAt: string; }
-interface Goal { id: number; title: string; description: string; category: string; targetValue: string; targetDate: string; achieved: boolean; }
 
-const CAT_LABELS: Record<string, string> = { peso: "Peso", fuerza: "Fuerza", medidas: "Medidas", habito: "Habito", otro: "Otro" };
 
 type Tab = "overview" | "medidas" | "objetivos" | "pagos";
 
@@ -20,7 +19,6 @@ export default function CoachStudentPage() {
   const { id } = useParams<{ id: string }>();
   const [student, setStudent] = useState<Student | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
@@ -42,10 +40,6 @@ export default function CoachStudentPage() {
     if (t === "medidas") {
       const data = await authFetch(`/coach/students/${id}/measurements`).then((r) => r.json());
       setMeasurements(data);
-    }
-    if (t === "objetivos") {
-      const data = await authFetch(`/coach/students/${id}/goals`).then((r) => r.json());
-      setGoals(data);
     }
     setTabLoaded((prev) => new Set([...prev, t]));
     setTab(t);
@@ -193,37 +187,7 @@ export default function CoachStudentPage() {
       {tab === "pagos" && <CoachPayments studentId={id} />}
 
       {/* Objetivos */}
-      {tab === "objetivos" && (
-        <div className="space-y-3">
-          {goals.length === 0 ? (
-            <div className="text-center py-16 bg-zinc-900 border border-white/10 rounded-2xl">
-              <Target className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-400">Sin objetivos registrados todavia.</p>
-            </div>
-          ) : (
-            goals.map((g) => (
-              <div key={g.id} className={`bg-zinc-900 border rounded-xl p-4 ${g.achieved ? "border-green-600/30" : "border-zinc-800"}`}>
-                <div className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${g.achieved ? "bg-green-600/20" : "bg-zinc-800"}`}>
-                    {g.achieved ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Target className="w-4 h-4 text-zinc-400" />}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`font-bold ${g.achieved ? "line-through text-zinc-500" : ""}`}>{g.title}</p>
-                      <span className="text-xs px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full">{CAT_LABELS[g.category] || g.category}</span>
-                    </div>
-                    {g.description && <p className="text-zinc-500 text-sm mt-0.5">{g.description}</p>}
-                    <div className="flex gap-4 mt-1">
-                      {g.targetValue && <span className="text-xs text-zinc-500">Meta: <span className="text-zinc-300">{g.targetValue}</span></span>}
-                      {g.targetDate && <span className="text-xs text-zinc-500">Fecha: <span className="text-zinc-300">{new Date(g.targetDate).toLocaleDateString("es-AR")}</span></span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      {tab === "objetivos" && <CoachGoals studentId={id} />}
     </div>
   );
 }

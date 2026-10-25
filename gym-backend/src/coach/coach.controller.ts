@@ -8,6 +8,7 @@ import { UserRole } from '../users/user.entity';
 import { CreateStudentDto, SetPasswordDto } from './dto';
 import { CreateMeasurementDto } from '../measurements/dto';
 import { CreateStudentPaymentDto, MarkPaidDto } from '../payments/dto';
+import { CreateGoalDto } from '../goals/dto';
 
 function assertCoach(req: any) {
   if (req.user.role !== 'coach' && req.user.role !== 'admin') throw new ForbiddenException();
@@ -84,6 +85,27 @@ export class CoachController {
   getStudentGoals(@Request() req: any, @Param('id', ParseIntPipe) id: number) {
     assertCoach(req);
     return this.svc.getStudentGoals(req.user.id, id);
+  }
+
+  @Post('students/:id/goals')
+  @UseGuards(JwtAuthGuard)
+  createStudentGoal(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: CreateGoalDto) {
+    assertCoach(req);
+    return this.svc.createStudentGoal(req.user.id, id, dto);
+  }
+
+  @Patch('students/:id/goals/:goalId/toggle')
+  @UseGuards(JwtAuthGuard)
+  toggleStudentGoal(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Param('goalId', ParseIntPipe) goalId: number) {
+    assertCoach(req);
+    return this.svc.toggleStudentGoal(req.user.id, id, goalId);
+  }
+
+  @Delete('students/:id/goals/:goalId')
+  @UseGuards(JwtAuthGuard)
+  deleteStudentGoal(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Param('goalId', ParseIntPipe) goalId: number) {
+    assertCoach(req);
+    return this.svc.deleteStudentGoal(req.user.id, id, goalId);
   }
 
   @Post('students/:id/assign')

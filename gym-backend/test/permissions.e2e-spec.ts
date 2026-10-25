@@ -221,4 +221,34 @@ describe('Permissions (e2e)', () => {
       await request(http).post(`/coach/students/${s.id}/payments`).set('Authorization', `Bearer ${coach}`).send({ amount: 1000 }).expect(400);
     });
   });
+
+  describe('goals', () => {
+    it('coach creates, toggles and deletes goals; student only reads', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      const auth = { Authorization: `Bearer ${coach}` };
+      const g = await request(http).post(`/coach/students/${s.id}/goals`).set(auth)
+        .send({ title: 'Bajar 5 kg', category: 'peso', targetValue: '75 kg', targetDate: '2027-01-31' }).expect(201);
+      const toggled = await request(http).patch(`/coach/students/${s.id}/goals/${g.body.id}/toggle`).set(auth).expect(200);
+      expect(toggled.body.achieved).toBe(true);
+
+      const st = { Authorization: `Bearer ${s.token}` };
+      const mine = await request(http).get('/goals').set(st).expect(200);
+      expect(mine.body).toHaveLength(1);
+      await request(http).post('/goals').set(st).send({ title: 'Propio', category: 'otro' }).expect(404);
+      await request(http).patch(`/goals/${g.body.id}/toggle`).set(st).expect(404);
+      await request(http).post(`/coach/students/${s.id}/goals`).set(st).send({ title: 'Propio', category: 'otro' }).expect(403);
+
+      await request(http).delete(`/coach/students/${s.id}/goals/${g.body.id}`).set(auth).expect(200);
+      expect((await request(http).get('/goals').set(st)).body).toHaveLength(0);
+    });
+
+    it('rejects an invalid category and another coach', async () => {
+      const coach = await signupCoach();
+      const other = await signupCoach();
+      const s = await createStudent(coach);
+      await request(http).post(`/coach/students/${s.id}/goals`).set('Authorization', `Bearer ${coach}`).send({ title: 'X objetivo', category: 'nada' }).expect(400);
+      await request(http).post(`/coach/students/${s.id}/goals`).set('Authorization', `Bearer ${other}`).send({ title: 'Ajeno', category: 'otro' }).expect(403);
+    });
+  });
 });
