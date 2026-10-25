@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -10,23 +10,19 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(email: string, name: string, password: string, role?: 'user' | 'coach', coachId?: number, coachCode?: string) {
-    if (role === 'coach') {
-      // No secret configured = coach signup disabled. Never fall back to a default.
-      const secret = process.env.SETUP_SECRET;
-      if (!secret || coachCode !== secret) throw new UnauthorizedException('Código de coach incorrecto');
-      coachId = undefined;
-    } else if (coachId) {
-      const coach = await this.usersService.findById(coachId);
-      if (!coach || (coach.role !== 'coach' && coach.role !== 'admin')) throw new BadRequestException('Coach inválido');
-    }
-    const user = await this.usersService.create(email, name, password, role, coachId);
+  async register(email: string, name: string, password: string, role?: 'user' | 'coach', coachCode?: string) {
+    // Public signup is for coaches only. Students get their login from their coach (POST /coach/students).
+    if (role !== 'coach') throw new ForbiddenException('Las cuentas de alumno las crea tu coach');
+    // No secret configured = coach signup disabled. Never fall back to a default.
+    const secret = process.env.SETUP_SECRET;
+    if (!secret || coachCode !== secret) throw new UnauthorizedException('Código de coach incorrecto');
+    const user = await this.usersService.create(email.trim().toLowerCase(), name, password, 'coach');
     const token = this.signToken(user.id, user.email);
     return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
   }
 
   async login(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email.trim().toLowerCase());
     if (!user) throw new UnauthorizedException('Credenciales incorrectas');
 
     const valid = await bcrypt.compare(password, user.password);

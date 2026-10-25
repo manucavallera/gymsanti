@@ -5,6 +5,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoachService } from './coach.service';
 import { UserRole } from '../users/user.entity';
+import { CreateStudentDto, SetPasswordDto } from './dto';
 
 function assertCoach(req: any) {
   if (req.user.role !== 'coach' && req.user.role !== 'admin') throw new ForbiddenException();
@@ -28,6 +29,20 @@ export class CoachController {
   getMyStudents(@Request() req: any) {
     assertCoach(req);
     return this.svc.getMyStudents(req.user.id);
+  }
+
+  @Post('students')
+  @UseGuards(JwtAuthGuard)
+  createStudent(@Request() req: any, @Body() dto: CreateStudentDto) {
+    assertCoach(req);
+    return this.svc.createStudent(req.user.id, dto);
+  }
+
+  @Patch('students/:id/password')
+  @UseGuards(JwtAuthGuard)
+  setStudentPassword(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: SetPasswordDto) {
+    assertCoach(req);
+    return this.svc.setStudentPassword(req.user.id, id, dto.password);
   }
 
   @Get('students/:id')

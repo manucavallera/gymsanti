@@ -5,6 +5,8 @@ import { User, UserRole } from '../users/user.entity';
 import { Measurement } from '../measurements/measurement.entity';
 import { Goal } from '../goals/goal.entity';
 import { Payment } from '../payments/payment.entity';
+import { UsersService } from '../users/users.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class CoachService {
@@ -13,6 +15,7 @@ export class CoachService {
     @InjectRepository(Measurement) private measurementRepo: Repository<Measurement>,
     @InjectRepository(Goal) private goalRepo: Repository<Goal>,
     @InjectRepository(Payment) private paymentRepo: Repository<Payment>,
+    private readonly usersService: UsersService,
   ) {}
 
   async getMyStudents(coachId: number) {
@@ -30,6 +33,20 @@ export class CoachService {
     });
     if (!student) throw new NotFoundException('Alumno no encontrado');
     return student;
+  }
+
+  // Students do not self-register: the coach creates the login and hands it over.
+  async createStudent(coachId: number, data: { email: string; name: string; password: string }) {
+    const u = await this.usersService.create(data.email.trim().toLowerCase(), data.name.trim(), data.password, 'user', coachId);
+    return { id: u.id, email: u.email, name: u.name, role: u.role, coachId: u.coachId, createdAt: u.createdAt };
+  }
+
+  async setStudentPassword(coachId: number, studentId: number, password: string) {
+    const student = await this.userRepo.findOne({ where: { id: studentId, coachId } });
+    if (!student) throw new ForbiddenException('No tenes acceso a este alumno');
+    student.password = await bcrypt.hash(password, 10);
+    await this.userRepo.save(student);
+    return { ok: true };
   }
 
   async assignStudent(coachId: number, studentId: number) {

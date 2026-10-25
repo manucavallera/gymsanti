@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, TrendingDown, TrendingUp, Minus, CheckCircle2, CreditCard, Clock, AlertCircle, Trash2, X, Plus } from "lucide-react";
+import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, TrendingDown, TrendingUp, Minus, CheckCircle2, CreditCard, Clock, AlertCircle, Trash2, X, Plus, KeyRound } from "lucide-react";
 import Link from "next/link";
-import { authFetch } from "@/lib/api";
+import { authFetch, ensureOk } from "@/lib/api";
 
 interface Student { id: number; name: string; email: string; role: string; createdAt: string; }
 interface Measurement {
@@ -53,6 +53,8 @@ export default function CoachStudentPage() {
   const [payMethod, setPayMethod] = useState("transferencia");
   const [showPayForm, setShowPayForm] = useState(false);
   const [payForm, setPayForm] = useState({ description: "", amount: "", period: "", dueDate: "" });
+  const [newPassword, setNewPassword] = useState("");
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     authFetch(`/coach/students/${id}`)
@@ -78,6 +80,18 @@ export default function CoachStudentPage() {
     }
     setTabLoaded((prev) => new Set([...prev, t]));
     setTab(t);
+  };
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwMsg(null);
+    try {
+      await authFetch(`/coach/students/${id}/password`, { method: "PATCH", body: JSON.stringify({ password: newPassword }) }).then(ensureOk);
+      setPwMsg({ ok: true, text: `Listo. Nueva contraseña: ${newPassword}` });
+      setNewPassword("");
+    } catch (err) {
+      setPwMsg({ ok: false, text: err instanceof Error ? err.message : "No se pudo cambiar" });
+    }
   };
 
   if (loading) return <div className="text-zinc-500 text-sm">Cargando...</div>;
@@ -150,6 +164,29 @@ export default function CoachStudentPage() {
             <h3 className="text-lg font-black uppercase tracking-tight mb-1">Nutricion</h3>
             <p className="text-zinc-500 text-sm">Configurar el plan alimenticio con dias, comidas y macros.</p>
           </Link>
+
+          <form onSubmit={changePassword} className="sm:col-span-2 bg-zinc-900 border border-white/10 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center">
+                <KeyRound className="w-5 h-5 text-zinc-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-tight">Contraseña</h3>
+                <p className="text-zinc-500 text-sm">Si se la olvidó, poné una nueva y pasásela.</p>
+              </div>
+            </div>
+            {pwMsg && (
+              <p className={`text-sm ${pwMsg.ok ? "text-green-400" : "text-red-400"}`}>{pwMsg.text}</p>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input type="text" required minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Nueva contraseña (mínimo 6)" autoComplete="off"
+                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
+              <button type="submit" className="px-4 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg text-sm font-bold text-white transition-colors">
+                Cambiar
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

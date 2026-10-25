@@ -2,15 +2,30 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 
-// Regression tests for the permission holes found in the October 2026 smoke test.
+// Regression tests for the permission holes found in the October 2026 smoke test,
+// plus the coach-managed student accounts.
 describe('Permissions (e2e)', () => {
   let app: INestApplication;
   let http: ReturnType<INestApplication['getHttpServer']>;
+  let n = 0;
 
-  const register = (body: Record<string, unknown>) => request(http).post('/auth/register').send({ password: '123456', ...body });
+  const signupCoach = async () => {
+    const res = await request(http).post('/auth/register')
+      .send({ email: `coach${++n}@t.com`, name: `Coach ${n}`, password: '123456', role: 'coach', coachCode: 'test-secret' })
+      .expect(201);
+    return res.body.token as string;
+  };
+
+  const createStudent = async (coachToken: string, email = `alumno${++n}@t.com`) => {
+    const res = await request(http).post('/coach/students').set('Authorization', `Bearer ${coachToken}`)
+      .send({ email, name: 'Alumno', password: '123456' })
+      .expect(201);
+    const login = await request(http).post('/auth/login').send({ email, password: '123456' }).expect(201);
+    return { id: res.body.id as number, token: login.body.token as string, body: res.body };
+  };
 
   beforeAll(async () => {
-    // Set before AppModule loads: the DB path is read when the module is imported.
+    // Set before AppModule loads: the DB config is read when the module is imported.
     process.env.DB_PATH = ':memory:';
     process.env.SETUP_SECRET = 'test-secret';
     const { AppModule } = await import('../src/app.module');
@@ -25,82 +40,103 @@ describe('Permissions (e2e)', () => {
     await app.close();
   });
 
-  describe('coach signup', () => {
+  describe('public signup', () => {
+    it('rejects students signing up on their own', async () => {
+      await request(http).post('/auth/register').send({ email: 'solo@t.com', name: 'Solo', password: '123456' }).expect(403);
+    });
+
     it('rejects role=coach without code', async () => {
-      await register({ email: 'nocode@t.com', name: 'Sin codigo', role: 'coach' }).expect(401);
+      await request(http).post('/auth/register').send({ email: 'nocode@t.com', name: 'Sin codigo', password: '123456', role: 'coach' }).expect(401);
     });
 
     it('rejects role=coach with wrong code', async () => {
-      await register({ email: 'bad@t.com', name: 'Codigo malo', role: 'coach', coachCode: 'nope' }).expect(401);
+      await request(http).post('/auth/register').send({ email: 'bad@t.com', name: 'Malo', password: '123456', role: 'coach', coachCode: 'nope' }).expect(401);
     });
 
     it('accepts role=coach with the right code', async () => {
-      const res = await register({ email: 'ok@t.com', name: 'Coach ok', role: 'coach', coachCode: 'test-secret' }).expect(201);
-      expect(res.body.user.role).toBe('coach');
+      const token = await signupCoach();
+      const me = await request(http).get('/auth/me').set('Authorization', `Bearer ${token}`).expect(200);
+      expect(me.body.role).toBe('coach');
+    });
+  });
+
+  describe('coach creates students', () => {
+    it('creates a student login assigned to the coach, without password in the response', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach, 'Mixed.Case@T.com');
+      expect(s.body.password).toBeUndefined();
+      expect(s.body.email).toBe('mixed.case@t.com');
+      const list = await request(http).get('/coach/students').set('Authorization', `Bearer ${coach}`).expect(200);
+      expect(list.body.map((u: { id: number }) => u.id)).toContain(s.id);
     });
 
-    it('rejects a student pointing at a non-coach coachId', async () => {
-      const plain = await register({ email: 'plain@t.com', name: 'Plain' }).expect(201);
-      await register({ email: 'x@t.com', name: 'X', coachId: plain.body.user.id }).expect(400);
+    it('student cannot create students', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      await request(http).post('/coach/students').set('Authorization', `Bearer ${s.token}`)
+        .send({ email: 'x@t.com', name: 'Intruso', password: '123456' }).expect(403);
+    });
+
+    it('rejects a duplicate email', async () => {
+      const coach = await signupCoach();
+      await createStudent(coach, 'dup@t.com');
+      await request(http).post('/coach/students').set('Authorization', `Bearer ${coach}`)
+        .send({ email: 'dup@t.com', name: 'Dup', password: '123456' }).expect(409);
+    });
+
+    it('coach sets a new password for own student only', async () => {
+      const coach = await signupCoach();
+      const other = await signupCoach();
+      const s = await createStudent(coach, 'pw@t.com');
+      await request(http).patch(`/coach/students/${s.id}/password`).set('Authorization', `Bearer ${other}`).send({ password: 'nueva123' }).expect(403);
+      await request(http).patch(`/coach/students/${s.id}/password`).set('Authorization', `Bearer ${coach}`).send({ password: 'nueva123' }).expect(200);
+      await request(http).post('/auth/login').send({ email: 'pw@t.com', password: 'nueva123' }).expect(201);
+      await request(http).post('/auth/login').send({ email: 'pw@t.com', password: '123456' }).expect(401);
     });
   });
 
   describe('routines and nutrition', () => {
     let coach: string;
     let otherCoach: string;
-    let student: string;
-    let studentId: number;
+    let student: { id: number; token: string };
 
     beforeAll(async () => {
-      coach = (await register({ email: 'c1@t.com', name: 'Coach 1', role: 'coach', coachCode: 'test-secret' })).body.token;
-      otherCoach = (await register({ email: 'c2@t.com', name: 'Coach 2', role: 'coach', coachCode: 'test-secret' })).body.token;
-      const s = await register({ email: 's1@t.com', name: 'Alumno 1' });
-      student = s.body.token;
-      studentId = s.body.user.id;
-      await request(http).post(`/coach/students/${studentId}/assign`).set('Authorization', `Bearer ${coach}`).expect(201);
+      coach = await signupCoach();
+      otherCoach = await signupCoach();
+      student = await createStudent(coach);
     });
 
     it('student cannot create a routine', async () => {
-      await request(http).post(`/routines/coach/students/${studentId}`).set('Authorization', `Bearer ${student}`).send({ name: 'Falsa' }).expect(403);
+      await request(http).post(`/routines/coach/students/${student.id}`).set('Authorization', `Bearer ${student.token}`).send({ name: 'Falsa' }).expect(403);
     });
 
     it('student cannot create a meal plan', async () => {
-      await request(http).post(`/nutrition/coach/students/${studentId}`).set('Authorization', `Bearer ${student}`).send({ name: 'Falso' }).expect(403);
+      await request(http).post(`/nutrition/coach/students/${student.id}`).set('Authorization', `Bearer ${student.token}`).send({ name: 'Falso' }).expect(403);
     });
 
     it('coach cannot create a routine for a student of another coach', async () => {
-      await request(http).post(`/routines/coach/students/${studentId}`).set('Authorization', `Bearer ${otherCoach}`).send({ name: 'Ajena' }).expect(403);
+      await request(http).post(`/routines/coach/students/${student.id}`).set('Authorization', `Bearer ${otherCoach}`).send({ name: 'Ajena' }).expect(403);
     });
 
     it('coach cannot create a meal plan for a student of another coach', async () => {
-      await request(http).post(`/nutrition/coach/students/${studentId}`).set('Authorization', `Bearer ${otherCoach}`).send({ name: 'Ajeno' }).expect(403);
+      await request(http).post(`/nutrition/coach/students/${student.id}`).set('Authorization', `Bearer ${otherCoach}`).send({ name: 'Ajeno' }).expect(403);
     });
 
     it('assigned coach creates a routine and the student sees the newest one', async () => {
       const auth = { Authorization: `Bearer ${coach}` };
-      await request(http).post(`/routines/coach/students/${studentId}`).set(auth).send({ name: 'Primera' }).expect(201);
-      const second = await request(http).post(`/routines/coach/students/${studentId}`).set(auth).send({ name: 'Segunda' }).expect(201);
-      const mine = await request(http).get('/routines/my').set('Authorization', `Bearer ${student}`).expect(200);
+      await request(http).post(`/routines/coach/students/${student.id}`).set(auth).send({ name: 'Primera' }).expect(201);
+      const second = await request(http).post(`/routines/coach/students/${student.id}`).set(auth).send({ name: 'Segunda' }).expect(201);
+      const mine = await request(http).get('/routines/my').set('Authorization', `Bearer ${student.token}`).expect(200);
       expect(mine.body.id).toBe(second.body.id);
     });
   });
 
   describe('assign student', () => {
-    it('does not steal a student from another coach and never returns the password', async () => {
-      const c1 = (await register({ email: 'a1@t.com', name: 'A1', role: 'coach', coachCode: 'test-secret' })).body.token;
-      const c2 = (await register({ email: 'a2@t.com', name: 'A2', role: 'coach', coachCode: 'test-secret' })).body.token;
-      const s = (await register({ email: 'as@t.com', name: 'AS' })).body.user.id;
-
-      const first = await request(http).post(`/coach/students/${s}/assign`).set('Authorization', `Bearer ${c1}`).expect(201);
-      expect(first.body.password).toBeUndefined();
-
-      await request(http).post(`/coach/students/${s}/assign`).set('Authorization', `Bearer ${c2}`).expect(409);
-    });
-
-    it('does not assign another coach as a student', async () => {
-      const c1 = await register({ email: 'b1@t.com', name: 'B1', role: 'coach', coachCode: 'test-secret' });
-      const c2 = await register({ email: 'b2@t.com', name: 'B2', role: 'coach', coachCode: 'test-secret' });
-      await request(http).post(`/coach/students/${c2.body.user.id}/assign`).set('Authorization', `Bearer ${c1.body.token}`).expect(400);
+    it('does not steal a student from another coach', async () => {
+      const c1 = await signupCoach();
+      const c2 = await signupCoach();
+      const s = await createStudent(c1);
+      await request(http).post(`/coach/students/${s.id}/assign`).set('Authorization', `Bearer ${c2}`).expect(409);
     });
   });
 });

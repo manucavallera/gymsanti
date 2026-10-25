@@ -1,43 +1,63 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Dumbbell, UtensilsCrossed, ChevronRight, Trash2, Search } from "lucide-react";
+import { Users, UserPlus, Dumbbell, UtensilsCrossed, ChevronRight, Trash2, Copy, Check } from "lucide-react";
 import Link from "next/link";
-import { authFetch } from "@/lib/api";
+import { authFetch, ensureOk } from "@/lib/api";
 
 interface Student { id: number; name: string; email: string; role: string; createdAt: string; }
-interface AllUser { id: number; name: string; email: string; role: string; coachId: number | null; }
 
 export default function CoachStudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [allUsers, setAllUsers] = useState<AllUser[]>([]);
-  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+  // Last created login, shown once so the coach can pass it to the student.
+  const [created, setCreated] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState<"students" | "add">("students");
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    Promise.all([
-      authFetch("/coach/students").then((r) => r.json()),
-      authFetch("/coach/users").then((r) => r.json()),
-    ]).then(([s, u]) => {
-      setStudents(s);
-      setAllUsers(u);
-    }).finally(() => setLoading(false));
+    authFetch("/coach/students")
+      .then((r) => r.json())
+      .then(setStudents)
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
 
-  const assign = async (userId: number) => {
-    await authFetch(`/coach/students/${userId}/assign`, { method: "POST" });
-    load();
+  const createStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setFormError("");
+    try {
+      const r = await authFetch("/coach/students", { method: "POST", body: JSON.stringify(form) }).then(ensureOk);
+      const s = await r.json();
+      setCreated({ name: s.name, email: s.email, password: form.password });
+      setCopied(false);
+      setForm({ name: "", email: "", password: "" });
+      load();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "No se pudo crear el alumno");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const remove = async (studentId: number) => {
+  const copyLogin = async () => {
+    if (!created) return;
+    const text = `Hola ${created.name}! Tu acceso a GYM CORE:\nEmail: ${created.email}\nContraseña: ${created.password}\nEntrá en ${window.location.origin}/login`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {}
+  };
+
+  const remove = async (studentId: number, name: string) => {
+    if (!confirm(`¿Quitar a ${name} de tus alumnos?`)) return;
     await authFetch(`/coach/students/${studentId}`, { method: "DELETE" });
     load();
   };
-
-  const unassigned = allUsers.filter((u) => !u.coachId && u.role === "user"
-    && u.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -94,7 +114,7 @@ export default function CoachStudentsPage() {
                   className="flex items-center gap-1.5 px-3 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 rounded-lg text-sm text-white font-bold transition-colors">
                   Ver perfil <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
-                <button onClick={() => remove(s.id)}
+                <button onClick={() => remove(s.id, s.name)}
                   className="p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-zinc-800">
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -106,34 +126,55 @@ export default function CoachStudentsPage() {
 
       {tab === "add" && (
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text" placeholder="Buscar usuario por nombre..."
-              value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors"
-            />
-          </div>
-          {unassigned.length === 0 && (
-            <p className="text-zinc-500 text-sm text-center py-8">No hay usuarios sin coach disponibles.</p>
-          )}
-          {unassigned.map((u) => (
-            <div key={u.id} className="bg-zinc-900 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-zinc-700 rounded-full flex items-center justify-center font-bold text-sm">
-                  {u.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium">{u.name}</p>
-                  <p className="text-zinc-500 text-sm">{u.email}</p>
-                </div>
+          {created && (
+            <div className="rounded-2xl border border-green-600/30 bg-green-600/10 p-5 space-y-3">
+              <p className="font-bold text-green-400">Alumno creado. Pasale estos datos para que entre:</p>
+              <div className="text-sm space-y-1">
+                <p><span className="text-zinc-400">Email:</span> {created.email}</p>
+                <p><span className="text-zinc-400">Contraseña:</span> {created.password}</p>
               </div>
-              <button onClick={() => assign(u.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-lg text-sm font-bold transition-colors">
-                <UserPlus className="w-4 h-4" /> Asignar
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={copyLogin}
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-bold transition-colors">
+                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  {copied ? "Copiado" : "Copiar mensaje"}
+                </button>
+                <button onClick={() => { setCreated(null); setTab("students"); }}
+                  className="px-4 py-2 text-zinc-400 hover:text-white text-sm font-bold">
+                  Ver mis alumnos
+                </button>
+              </div>
             </div>
-          ))}
+          )}
+
+          <form onSubmit={createStudent} className="rounded-2xl border border-white/10 bg-zinc-900 p-5 sm:p-6 space-y-4">
+            <div>
+              <h3 className="text-lg font-black uppercase tracking-tight">Nuevo alumno</h3>
+              <p className="text-zinc-500 text-sm">Creás su usuario y contraseña. Después el alumno entra y ve lo que le cargues.</p>
+            </div>
+            {formError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">{formError}</div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Nombre y apellido</label>
+              <input type="text" required minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Juan Pérez" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="juan@email.com" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Contraseña</label>
+              <input type="text" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres" autoComplete="off" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500 transition-colors" />
+            </div>
+            <button type="submit" disabled={saving}
+              className="w-full flex items-center justify-center gap-2 bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white py-3 rounded-xl font-bold uppercase tracking-wide transition-colors">
+              <UserPlus className="w-4 h-4" /> {saving ? "Creando..." : "Crear alumno"}
+            </button>
+          </form>
         </div>
       )}
     </div>

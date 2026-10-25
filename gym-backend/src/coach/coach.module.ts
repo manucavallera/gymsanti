@@ -6,9 +6,10 @@ import { Goal } from '../goals/goal.entity';
 import { Payment } from '../payments/payment.entity';
 import { CoachService } from './coach.service';
 import { CoachController } from './coach.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Measurement, Goal, Payment])],
+  imports: [TypeOrmModule.forFeature([User, Measurement, Goal, Payment]), UsersModule],
   providers: [CoachService],
   controllers: [CoachController],
 })

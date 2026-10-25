@@ -15,7 +15,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string, role?: 'user' | 'coach', coachId?: number, coachCode?: string) => Promise<void>;
+  register: (email: string, name: string, password: string, coachCode: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -63,11 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   };
 
-  const register = async (email: string, name: string, password: string, role?: 'user' | 'coach', coachId?: number, coachCode?: string) => {
+  // Public signup is coach-only; students are created by their coach.
+  const register = async (email: string, name: string, password: string, coachCode: string) => {
     const res = await fetch(`${API}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, password, role, coachId, coachCode }),
+      body: JSON.stringify({ email, name, password, role: "coach", coachCode }),
     });
     if (!res.ok) {
       const err = await res.json();
