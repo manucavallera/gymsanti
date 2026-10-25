@@ -176,4 +176,49 @@ describe('Permissions (e2e)', () => {
       await request(http).post(`/coach/students/${s.id}/measurements`).set('Authorization', `Bearer ${coach}`).send({ restingHr: 500 }).expect(400);
     });
   });
+
+  describe('payments', () => {
+    it('coach records a pending fee and a paid fee; student only reads them', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      const auth = { Authorization: `Bearer ${coach}` };
+      const pending = await request(http).post(`/coach/students/${s.id}/payments`).set(auth)
+        .send({ description: 'Cuota noviembre', amount: 25000, period: 'Noviembre 2026', dueDate: '2026-11-10' }).expect(201);
+      expect(pending.body.status).toBe('pendiente');
+      const paid = await request(http).post(`/coach/students/${s.id}/payments`).set(auth)
+        .send({ description: 'Cuota octubre', amount: 25000, paid: true, method: 'transferencia' }).expect(201);
+      expect(paid.body.status).toBe('pagado');
+      expect(paid.body.method).toBe('transferencia');
+      expect(paid.body.paidAt).toBeTruthy();
+
+      const mine = await request(http).get('/payments').set('Authorization', `Bearer ${s.token}`).expect(200);
+      expect(mine.body).toHaveLength(2);
+    });
+
+    it('student cannot create fees, mark them paid or delete them', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      const fee = await request(http).post(`/coach/students/${s.id}/payments`).set('Authorization', `Bearer ${coach}`)
+        .send({ description: 'Cuota', amount: 1000 }).expect(201);
+      const st = { Authorization: `Bearer ${s.token}` };
+      await request(http).post('/payments').set(st).send({ description: 'Me pago solo', amount: 1 }).expect(403);
+      await request(http).patch(`/payments/${fee.body.id}/pay`).set(st).send({ method: 'efectivo' }).expect(404);
+      await request(http).delete(`/payments/${fee.body.id}`).set(st).expect(404);
+      await request(http).patch(`/coach/students/${s.id}/payments/${fee.body.id}/pay`).set(st).send({ method: 'efectivo' }).expect(403);
+    });
+
+    it('store checkout still reaches the stock check (not blocked as a fee)', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      const products = await request(http).get('/products').expect(200);
+      await request(http).post('/payments').set('Authorization', `Bearer ${s.token}`)
+        .send({ description: 'Compra', amount: 1, items: [{ productId: products.body[0].id, quantity: 1 }] }).expect(409);
+    });
+
+    it('rejects a fee without description instead of failing with 500', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      await request(http).post(`/coach/students/${s.id}/payments`).set('Authorization', `Bearer ${coach}`).send({ amount: 1000 }).expect(400);
+    });
+  });
 });

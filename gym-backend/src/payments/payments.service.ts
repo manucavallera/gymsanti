@@ -47,17 +47,4 @@ export class PaymentsService {
   findAll(userId: number) {
     return this.repo.find({ where: { userId }, order: { createdAt: 'DESC' } });
   }
-
-  async markPaid(userId: number, id: number, method: string) {
-    const p = await this.repo.findOne({ where: { id, userId } });
-    if (!p) return null;
-    p.status = 'pagado';
-    p.method = method as any;
-    p.paidAt = new Date().toISOString();
-    return this.repo.save(p);
-  }
-
-  async delete(userId: number, id: number) {
-    await this.repo.delete({ id, userId });
-  }
 }

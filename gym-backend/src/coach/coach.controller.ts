@@ -7,6 +7,7 @@ import { CoachService } from './coach.service';
 import { UserRole } from '../users/user.entity';
 import { CreateStudentDto, SetPasswordDto } from './dto';
 import { CreateMeasurementDto } from '../measurements/dto';
+import { CreateStudentPaymentDto, MarkPaidDto } from '../payments/dto';
 
 function assertCoach(req: any) {
   if (req.user.role !== 'coach' && req.user.role !== 'admin') throw new ForbiddenException();
@@ -126,7 +127,7 @@ export class CoachController {
 
   @Post('students/:studentId/payments')
   @UseGuards(JwtAuthGuard)
-  createStudentPayment(@Request() req: any, @Param('studentId', ParseIntPipe) studentId: number, @Body() body: any) {
+  createStudentPayment(@Request() req: any, @Param('studentId', ParseIntPipe) studentId: number, @Body() body: CreateStudentPaymentDto) {
     assertCoach(req);
     return this.svc.createStudentPayment(req.user.id, studentId, body);
   }
@@ -137,7 +138,7 @@ export class CoachController {
     @Request() req: any,
     @Param('studentId', ParseIntPipe) studentId: number,
     @Param('paymentId', ParseIntPipe) paymentId: number,
-    @Body() body: { method: string },
+    @Body() body: MarkPaidDto,
   ) {
     assertCoach(req);
     return this.svc.markStudentPaymentPaid(req.user.id, studentId, paymentId, body.method);

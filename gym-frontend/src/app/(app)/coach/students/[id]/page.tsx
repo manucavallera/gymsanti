@@ -1,27 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, CheckCircle2, CreditCard, Clock, AlertCircle, Trash2, X, Plus, KeyRound } from "lucide-react";
+import { Dumbbell, UtensilsCrossed, ArrowLeft, ChevronRight, User, Ruler, Target, CheckCircle2, Plus, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { authFetch, ensureOk } from "@/lib/api";
 import { Measurement } from "@/lib/measurements";
 import { LatestMeasurements, MeasurementHistory } from "@/components/shared/measurement-views";
 import { MeasurementForm } from "@/components/shared/measurement-form";
+import { CoachPayments } from "@/components/shared/coach-payments";
 
 interface Student { id: number; name: string; email: string; role: string; createdAt: string; }
 interface Goal { id: number; title: string; description: string; category: string; targetValue: string; targetDate: string; achieved: boolean; }
-interface Payment { id: number; description: string; amount: number; status: string; method: string; period: string; dueDate: string; paidAt: string; createdAt: string; }
-
-const STATUS_CFG = {
-  pagado: { label: "Pagado", icon: CheckCircle2, color: "text-green-400", bg: "bg-green-600/10 border-green-600/20" },
-  pendiente: { label: "Pendiente", icon: Clock, color: "text-yellow-400", bg: "bg-yellow-600/10 border-yellow-600/20" },
-  vencido: { label: "Vencido", icon: AlertCircle, color: "text-red-400", bg: "bg-red-600/10 border-red-600/20" },
-};
-
-const PAY_METHODS = ["efectivo", "transferencia", "tarjeta", "mercadopago"];
-
-const fmt = (n: number) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
-
 
 const CAT_LABELS: Record<string, string> = { peso: "Peso", fuerza: "Fuerza", medidas: "Medidas", habito: "Habito", otro: "Otro" };
 
@@ -32,15 +21,10 @@ export default function CoachStudentPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [tabLoaded, setTabLoaded] = useState<Set<Tab>>(new Set(["overview"]));
-  const [payingId, setPayingId] = useState<number | null>(null);
-  const [payMethod, setPayMethod] = useState("transferencia");
-  const [showPayForm, setShowPayForm] = useState(false);
-  const [payForm, setPayForm] = useState({ description: "", amount: "", period: "", dueDate: "" });
   const [showMeasurementForm, setShowMeasurementForm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -62,10 +46,6 @@ export default function CoachStudentPage() {
     if (t === "objetivos") {
       const data = await authFetch(`/coach/students/${id}/goals`).then((r) => r.json());
       setGoals(data);
-    }
-    if (t === "pagos") {
-      const data = await authFetch(`/coach/students/${id}/payments`).then((r) => r.json());
-      setPayments(data);
     }
     setTabLoaded((prev) => new Set([...prev, t]));
     setTab(t);
@@ -210,120 +190,7 @@ export default function CoachStudentPage() {
       )}
 
       {/* Pagos */}
-      {tab === "pagos" && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Pagos del alumno</p>
-            <button onClick={() => setShowPayForm((v) => !v)}
-              className="flex items-center gap-1.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-colors">
-              <Plus className="w-3.5 h-3.5" />Nuevo
-            </button>
-          </div>
-
-          {showPayForm && (
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">Registrar pago</p>
-                <button onClick={() => setShowPayForm(false)}><X className="w-4 h-4 text-zinc-500" /></button>
-              </div>
-              <input placeholder="Descripcion *" value={payForm.description}
-                onChange={(e) => setPayForm((p) => ({ ...p, description: e.target.value }))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500" />
-              <div className="grid grid-cols-2 gap-2">
-                <input placeholder="Monto *" type="number" value={payForm.amount}
-                  onChange={(e) => setPayForm((p) => ({ ...p, amount: e.target.value }))}
-                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500" />
-                <input placeholder="Periodo (ej: Mayo 2025)" value={payForm.period}
-                  onChange={(e) => setPayForm((p) => ({ ...p, period: e.target.value }))}
-                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-fuchsia-500" />
-              </div>
-              <input type="date" value={payForm.dueDate}
-                onChange={(e) => setPayForm((p) => ({ ...p, dueDate: e.target.value }))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-fuchsia-500" />
-              <button
-                disabled={!payForm.description || !payForm.amount}
-                onClick={async () => {
-                  const data = await authFetch(`/coach/students/${id}/payments`, {
-                    method: "POST",
-                    body: JSON.stringify({ description: payForm.description, amount: parseFloat(payForm.amount), period: payForm.period, dueDate: payForm.dueDate }),
-                  }).then((r) => r.json());
-                  setPayments((p) => [data, ...p]);
-                  setPayForm({ description: "", amount: "", period: "", dueDate: "" });
-                  setShowPayForm(false);
-                }}
-                className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-40 text-white py-2 rounded-lg text-sm font-bold transition-colors">
-                Guardar
-              </button>
-            </div>
-          )}
-
-          {payments.length === 0 ? (
-            <div className="text-center py-12 bg-zinc-900 border border-white/10 rounded-2xl">
-              <CreditCard className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-400">Sin registros de pago todavia.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {payments.map((p) => {
-                const cfg = STATUS_CFG[p.status as keyof typeof STATUS_CFG] || STATUS_CFG.pendiente;
-                const Icon = cfg.icon;
-                return (
-                  <div key={p.id} className={`border rounded-xl p-4 ${cfg.bg}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${cfg.color}`} />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-sm">{p.description}</p>
-                            {p.period && <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">{p.period}</span>}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span className="font-black text-base">{fmt(Number(p.amount))}</span>
-                            <span className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</span>
-                            {p.dueDate && p.status !== "pagado" && <span className="text-xs text-zinc-500">Vence: {new Date(p.dueDate).toLocaleDateString("es-AR")}</span>}
-                            {p.paidAt && <span className="text-xs text-zinc-500">Pagado: {new Date(p.paidAt).toLocaleDateString("es-AR")}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {p.status !== "pagado" && (
-                          payingId === p.id ? (
-                            <div className="flex items-center gap-2">
-                              <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)}
-                                className="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none">
-                                {PAY_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                              </select>
-                              <button onClick={async () => {
-                                const updated = await authFetch(`/coach/students/${id}/payments/${p.id}/pay`, {
-                                  method: "PATCH", body: JSON.stringify({ method: payMethod }),
-                                }).then((r) => r.json());
-                                setPayments((prev) => prev.map((x) => x.id === p.id ? updated : x));
-                                setPayingId(null);
-                              }} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-lg text-xs font-bold">OK</button>
-                              <button onClick={() => setPayingId(null)}><X className="w-3.5 h-3.5 text-zinc-500" /></button>
-                            </div>
-                          ) : (
-                            <button onClick={() => setPayingId(p.id)}
-                              className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1">
-                              <CreditCard className="w-3 h-3" />Pagar
-                            </button>
-                          )
-                        )}
-                        <button onClick={async () => {
-                          await authFetch(`/coach/students/${id}/payments/${p.id}`, { method: "DELETE" });
-                          setPayments((prev) => prev.filter((x) => x.id !== p.id));
-                        }} className="p-1.5 text-zinc-600 hover:text-red-400 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {tab === "pagos" && <CoachPayments studentId={id} />}
 
       {/* Objetivos */}
       {tab === "objetivos" && (

@@ -7,6 +7,7 @@ import { Payment } from '../payments/payment.entity';
 import { UsersService } from '../users/users.service';
 import { MeasurementsService } from '../measurements/measurements.service';
 import { CreateMeasurementDto } from '../measurements/dto';
+import { CreateStudentPaymentDto } from '../payments/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -125,16 +126,21 @@ export class CoachService {
     return this.paymentRepo.find({ where: { userId: studentId }, order: { createdAt: 'DESC' } });
   }
 
-  async createStudentPayment(coachId: number, studentId: number, data: Partial<Payment>) {
+  async createStudentPayment(coachId: number, studentId: number, data: CreateStudentPaymentDto) {
     await this.assertCoachOwnsStudent(coachId, studentId);
-    const p = this.paymentRepo.create({ ...data, userId: studentId });
+    const { paid, method, ...rest } = data;
+    const p = this.paymentRepo.create({
+      ...rest,
+      userId: studentId,
+      ...(paid ? { status: 'pagado' as const, method: method ?? 'efectivo', paidAt: new Date().toISOString() } : {}),
+    });
     return this.paymentRepo.save(p);
   }
 
   async markStudentPaymentPaid(coachId: number, studentId: number, paymentId: number, method: string) {
     await this.assertCoachOwnsStudent(coachId, studentId);
     const p = await this.paymentRepo.findOne({ where: { id: paymentId, userId: studentId } });
-    if (!p) return null;
+    if (!p) throw new NotFoundException('Pago no encontrado');
     p.status = 'pagado';
     p.method = method as any;
     p.paidAt = new Date().toISOString();
