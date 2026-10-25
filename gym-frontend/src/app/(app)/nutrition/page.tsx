@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import { UtensilsCrossed, ChevronDown, ChevronUp, Flame, Beef, Wheat, Droplets } from "lucide-react";
 import { authFetch } from "@/lib/api";
 import { motion } from "framer-motion";
+import { PlanGuide } from "@/lib/nutrition";
+import { PlanGuideView } from "@/components/shared/plan-guide";
 
 interface Meal { id: number; name: string; time: string; calories: number; protein: number; carbs: number; fats: number; foods: string; order: number; }
 interface MealDay { id: number; name: string; order: number; meals: Meal[]; }
-interface MealPlan { id: number; name: string; description: string; dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFats: number; days: MealDay[]; }
+interface MealPlan extends PlanGuide { id: number; name: string; description: string; dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFats: number; days: MealDay[]; }
 
 const MacroBadge = ({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) => (
   <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 text-sm`}>
@@ -58,6 +60,8 @@ export default function NutritionPage() {
           </div>
         </div>
       )}
+
+      <PlanGuideView plan={plan} />
 
       <div className="space-y-3">
         {plan.days.map((day) => {

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { MealPlan, MealDay, Meal } from './nutrition.entities';
+import { CreateDayDto, CreateMealDto, CreatePlanDto, UpdateDayDto, UpdateMealDto, UpdatePlanDto } from './dto';
 
 @Injectable()
 export class NutritionService {
@@ -15,19 +16,13 @@ export class NutritionService {
 
   // ── Coach ──────────────────────────────────────────────────────────────────
 
-  async createPlan(coachId: number, studentId: number, data: {
-    name: string; description?: string;
-    dailyCalories?: number; dailyProtein?: number; dailyCarbs?: number; dailyFats?: number;
-  }) {
+  async createPlan(coachId: number, studentId: number, data: CreatePlanDto) {
     await this.assertCoachOwnsStudent(coachId, studentId);
     const plan = this.planRepo.create({ ...data, coachId, studentId });
     return this.planRepo.save(plan);
   }
 
-  async updatePlan(coachId: number, planId: number, data: {
-    name?: string; description?: string;
-    dailyCalories?: number; dailyProtein?: number; dailyCarbs?: number; dailyFats?: number;
-  }) {
+  async updatePlan(coachId: number, planId: number, data: UpdatePlanDto) {
     const plan = await this.planRepo.findOne({ where: { id: planId, coachId } });
     if (!plan) throw new NotFoundException();
     Object.assign(plan, data);
@@ -51,13 +46,13 @@ export class NutritionService {
 
   // ── Días ───────────────────────────────────────────────────────────────────
 
-  async addDay(coachId: number, planId: number, data: { name: string; order?: number }) {
+  async addDay(coachId: number, planId: number, data: CreateDayDto) {
     await this.assertCoachOwnsPlan(coachId, planId);
     const day = this.dayRepo.create({ ...data, planId });
     return this.dayRepo.save(day);
   }
 
-  async updateDay(coachId: number, dayId: number, data: { name?: string; order?: number }) {
+  async updateDay(coachId: number, dayId: number, data: UpdateDayDto) {
     const day = await this.dayRepo.findOne({ where: { id: dayId }, relations: ['plan'] });
     if (!day || day.plan.coachId !== coachId) throw new ForbiddenException();
     Object.assign(day, data);
@@ -72,20 +67,14 @@ export class NutritionService {
 
   // ── Comidas ────────────────────────────────────────────────────────────────
 
-  async addMeal(coachId: number, dayId: number, data: {
-    name: string; time?: string; calories?: number; protein?: number;
-    carbs?: number; fats?: number; foods?: string; order?: number;
-  }) {
+  async addMeal(coachId: number, dayId: number, data: CreateMealDto) {
     const day = await this.dayRepo.findOne({ where: { id: dayId }, relations: ['plan'] });
     if (!day || day.plan.coachId !== coachId) throw new ForbiddenException();
     const meal = this.mealRepo.create({ ...data, dayId });
     return this.mealRepo.save(meal);
   }
 
-  async updateMeal(coachId: number, mealId: number, data: {
-    name?: string; time?: string; calories?: number; protein?: number;
-    carbs?: number; fats?: number; foods?: string; order?: number;
-  }) {
+  async updateMeal(coachId: number, mealId: number, data: UpdateMealDto) {
     const meal = await this.mealRepo.findOne({ where: { id: mealId }, relations: ['day', 'day.plan'] });
     if (!meal || meal.day.plan.coachId !== coachId) throw new ForbiddenException();
     Object.assign(meal, data);

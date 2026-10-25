@@ -4,10 +4,12 @@ import { useParams } from "next/navigation";
 import { UtensilsCrossed, Plus, Trash2, ArrowLeft, Save, Edit2, ChevronDown, ChevronUp, Check, X, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { authFetch, ensureOk } from "@/lib/api";
+import { MEAL_NAMES, PlanGuide } from "@/lib/nutrition";
+import { PlanGuideEditor } from "@/components/shared/plan-guide";
 
 interface Meal { id: number; name: string; time: string; calories: number; protein: number; carbs: number; fats: number; foods: string; order: number; }
 interface MealDay { id: number; name: string; order: number; meals: Meal[]; }
-interface MealPlan { id: number; name: string; description: string; dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFats: number; days: MealDay[]; }
+interface MealPlan extends PlanGuide { id: number; name: string; description: string; dailyCalories: number; dailyProtein: number; dailyCarbs: number; dailyFats: number; days: MealDay[]; }
 
 const emptyMeal = { name: "", time: "", calories: "", protein: "", carbs: "", fats: "", foods: "" };
 
@@ -316,6 +318,10 @@ export default function CoachStudentNutritionPage() {
             <p className="text-zinc-600 text-xs mt-1">{plan.days.length} {plan.days.length === 1 ? "dia" : "dias"}</p>
           </div>
 
+          {/* PATCH returns the plan without days: keep the ones already loaded. */}
+          <PlanGuideEditor key={plan.id} planId={plan.id} plan={plan}
+            onSaved={(updated) => setPlan((p) => (p ? { ...p, ...updated, days: p.days } : p))} />
+
           {/* Sin dias — guia paso 2 */}
           {plan.days.length === 0 && (
             <div className="bg-zinc-900/50 border border-fuchsia-600/20 rounded-2xl p-6 text-center space-y-3">
@@ -448,6 +454,14 @@ export default function CoachStudentNutritionPage() {
                     {/* Agregar comida */}
                     <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-2 mt-2">
                       <p className="text-xs font-bold uppercase tracking-wide text-fuchsia-400">Agregar comida</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MEAL_NAMES.map((n) => (
+                          <button key={n} type="button" onClick={() => setNewMeal((p) => ({ ...p, [day.id]: { ...(p[day.id] || emptyMeal), name: n } }))}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${m.name === n ? "bg-fuchsia-600 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}>
+                            {n}
+                          </button>
+                        ))}
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         <input value={m.name} onChange={(e) => setNewMeal((p) => ({ ...p, [day.id]: { ...(p[day.id] || emptyMeal), name: e.target.value } }))}
                           placeholder="Nombre (ej: Desayuno)" className="col-span-2 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-fuchsia-500" />

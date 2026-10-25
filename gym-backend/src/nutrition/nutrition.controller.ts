@@ -5,6 +5,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CoachGuard } from '../auth/coach.guard';
 import { NutritionService } from './nutrition.service';
+import { CreateDayDto, CreateMealDto, CreatePlanDto, UpdateDayDto, UpdateMealDto, UpdatePlanDto } from './dto';
 
 @Controller('nutrition')
 @UseGuards(JwtAuthGuard)
@@ -31,7 +32,7 @@ export class NutritionController {
   createPlan(
     @Request() req: any,
     @Param('studentId', ParseIntPipe) studentId: number,
-    @Body() body: { name: string; description?: string; dailyCalories?: number; dailyProtein?: number; dailyCarbs?: number; dailyFats?: number },
+    @Body() body: CreatePlanDto,
   ) {
     return this.svc.createPlan(req.user.id, studentId, body);
   }
@@ -47,7 +48,7 @@ export class NutritionController {
   updatePlan(
     @Request() req: any,
     @Param('planId', ParseIntPipe) planId: number,
-    @Body() body: { name?: string; description?: string; dailyCalories?: number; dailyProtein?: number; dailyCarbs?: number; dailyFats?: number },
+    @Body() body: UpdatePlanDto,
   ) {
     return this.svc.updatePlan(req.user.id, planId, body);
   }
@@ -65,7 +66,7 @@ export class NutritionController {
   addDay(
     @Request() req: any,
     @Param('planId', ParseIntPipe) planId: number,
-    @Body() body: { name: string; order?: number },
+    @Body() body: CreateDayDto,
   ) {
     return this.svc.addDay(req.user.id, planId, body);
   }
@@ -75,7 +76,7 @@ export class NutritionController {
   updateDay(
     @Request() req: any,
     @Param('dayId', ParseIntPipe) dayId: number,
-    @Body() body: { name?: string; order?: number },
+    @Body() body: UpdateDayDto,
   ) {
     return this.svc.updateDay(req.user.id, dayId, body);
   }
@@ -93,7 +94,7 @@ export class NutritionController {
   addMeal(
     @Request() req: any,
     @Param('dayId', ParseIntPipe) dayId: number,
-    @Body() body: { name: string; time?: string; calories?: number; protein?: number; carbs?: number; fats?: number; foods?: string; order?: number },
+    @Body() body: CreateMealDto,
   ) {
     return this.svc.addMeal(req.user.id, dayId, body);
   }
@@ -103,7 +104,7 @@ export class NutritionController {
   updateMeal(
     @Request() req: any,
     @Param('mealId', ParseIntPipe) mealId: number,
-    @Body() body: { name?: string; time?: string; calories?: number; protein?: number; carbs?: number; fats?: number; foods?: string; order?: number },
+    @Body() body: UpdateMealDto,
   ) {
     return this.svc.updateMeal(req.user.id, mealId, body);
   }

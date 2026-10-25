@@ -3,6 +3,7 @@ import {
   OneToMany, CreateDateColumn, JoinColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
+import { decimalTransformer } from '../common/decimal.transformer';
 
 @Entity('meal_plans')
 export class MealPlan {
@@ -13,6 +14,13 @@ export class MealPlan {
   @Column({ nullable: true }) dailyProtein: number;
   @Column({ nullable: true }) dailyCarbs: number;
   @Column({ nullable: true }) dailyFats: number;
+  // Daily guide written by the coach, shown to the student next to the meals.
+  @Column('decimal', { precision: 3, scale: 1, nullable: true, transformer: decimalTransformer }) waterLiters: number;
+  @Column({ type: 'text', nullable: true }) vitamins: string;
+  @Column({ type: 'text', nullable: true }) supplements: string;
+  @Column({ type: 'text', nullable: true }) nervousSystem: string;
+  @Column({ type: 'text', nullable: true }) intestinal: string;
+  @Column({ type: 'text', nullable: true }) habits: string;
   @CreateDateColumn() createdAt: Date;
 
   @Column() studentId: number;

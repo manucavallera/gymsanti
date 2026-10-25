@@ -251,4 +251,38 @@ describe('Permissions (e2e)', () => {
       await request(http).post(`/coach/students/${s.id}/goals`).set('Authorization', `Bearer ${other}`).send({ title: 'Ajeno', category: 'otro' }).expect(403);
     });
   });
+
+  describe('nutrition plan', () => {
+    it('stores the daily guide and ignores studentId/coachId in the body', async () => {
+      const coach = await signupCoach();
+      const s1 = await createStudent(coach);
+      const s2 = await createStudent(coach);
+      const auth = { Authorization: `Bearer ${coach}` };
+      const plan = await request(http).post(`/nutrition/coach/students/${s1.id}`).set(auth)
+        .send({ name: 'Plan corte', dailyProtein: 160, waterLiters: 2.5, vitamins: 'Vitamina D 2000 UI', habits: 'Dormir 8 horas' }).expect(201);
+      expect(plan.body.waterLiters).toBe(2.5);
+
+      await request(http).patch(`/nutrition/coach/${plan.body.id}`).set(auth)
+        .send({ supplements: 'Creatina 5 g', studentId: s2.id, coachId: 999 }).expect(200);
+
+      const mine = await request(http).get('/nutrition/my').set('Authorization', `Bearer ${s1.token}`).expect(200);
+      expect(mine.body.supplements).toBe('Creatina 5 g');
+      expect(mine.body.vitamins).toBe('Vitamina D 2000 UI');
+      const other = await request(http).get('/nutrition/my').set('Authorization', `Bearer ${s2.token}`).expect(200);
+      expect(other.body).toEqual({});
+    });
+
+    it('requires a name to create a plan, a day or a meal', async () => {
+      const coach = await signupCoach();
+      const s = await createStudent(coach);
+      const auth = { Authorization: `Bearer ${coach}` };
+      await request(http).post(`/nutrition/coach/students/${s.id}`).set(auth).send({ dailyCalories: 2000 }).expect(400);
+      const plan = await request(http).post(`/nutrition/coach/students/${s.id}`).set(auth).send({ name: 'Plan' }).expect(201);
+      await request(http).post(`/nutrition/coach/${plan.body.id}/days`).set(auth).send({}).expect(400);
+      const day = await request(http).post(`/nutrition/coach/${plan.body.id}/days`).set(auth).send({ name: 'Lunes' }).expect(201);
+      await request(http).post(`/nutrition/coach/days/${day.body.id}/meals`).set(auth).send({ calories: 300 }).expect(400);
+      await request(http).post(`/nutrition/coach/days/${day.body.id}/meals`).set(auth)
+        .send({ name: 'Desayuno', time: '08:00', calories: 450, protein: 30, carbs: 50, fats: 12, foods: 'Avena' }).expect(201);
+    });
+  });
 });
